@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tributo — sovereign tax guidance</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <div>
+        <h1>Tributo</h1>
+        <p>Sovereign, cited tax guidance for UK citizens</p>
+      </div>
+    </div>
+    <div class="status" id="status">
+      <span class="pill" id="pill-flock">FLock …</span>
+      <span class="pill" id="pill-model">model …</span>
+      <span class="pill" id="pill-voice">voice …</span>
+      <a class="console-link" href="/gov.html">Institution console →</a>
+    </div>
+  </header>
+
+  <p class="mock-note">Reference mock for the Lovable build. It drives the real backend API. Voice here uses the browser's speech engine; production voice is LiveKit + ElevenLabs.</p>
+
+  <main class="grid">
+    <!-- Advisor stage -->
+    <section class="stage">
+      <div class="advisor">
+        <div class="orb" id="orb"></div>
+        <div class="advisor-meta">
+          <strong>Your tax advisor</strong>
+          <span id="confidence" class="confidence">ready</span>
+        </div>
+      </div>
+
+      <div class="transcript" id="transcript">
+        <p class="placeholder">Ask a tax question by voice or text. I answer with cited GOV.UK / HMRC guidance and show you the source.</p>
+      </div>
+
+      <div class="citations" id="citations"></div>
+      <div class="facts" id="facts"></div>
+      <div class="reasoning" id="reasoning" hidden></div>
+      <div class="actionplan" id="actionplan" hidden></div>
+
+      <div class="composer">
+        <button id="mic" class="mic" title="Speak">🎤</button>
+        <input id="question" type="text" placeholder="e.g. When do I register for Self Assessment?" />
+        <button id="ask" class="ask">Ask</button>
+        <label class="speak-toggle"><input type="checkbox" id="speak" checked /> speak</label>
+      </div>
+
+      <div class="examples" id="examples"></div>
+    </section>
+
+    <!-- Side panel -->
+    <aside class="panel">
+      <nav class="tabs" id="tabs">
+        <button data-tab="document" class="active">Document</button>
+        <button data-tab="privacy">Privacy</button>
+        <button data-tab="accountability">Accountability</button>
+        <button data-tab="federated">Federated</button>
+      </nav>
+
+      <div class="tab" id="tab-document">
+        <div class="doc-empty" id="doc-empty">The advisor will open and highlight the source it cites here.</div>
+        <article class="doc" id="doc" hidden>
+          <a class="doc-link" id="doc-link" target="_blank" rel="noreferrer"></a>
+          <h3 id="doc-title"></h3>
+          <p class="doc-pub" id="doc-pub"></p>
+          <p class="doc-body" id="doc-body"></p>
+        </article>
+      </div>
+
+      <div class="tab" id="tab-privacy" hidden>
+        <h3>What leaves this device</h3>
+        <p class="muted">PII is redacted before any text reaches inference. Raw text is never retained.</p>
+        <div id="redactions" class="chips"></div>
+        <h4>Redacted payload sent to FLock</h4>
+        <pre id="payload" class="payload">Ask a question to see the exact payload.</pre>
+      </div>
+
+      <div class="tab" id="tab-accountability" hidden>
+        <div class="acct-actions">
+          <button id="view-transparency">ATRS transparency record</button>
+          <button id="view-modelcard">Model card</button>
+          <button id="export-audit">Export audit log</button>
+        </div>
+        <h3>Audit trail <span id="audit-count" class="muted"></span></h3>
+        <div id="audit" class="audit"></div>
+        <pre id="acct-doc" class="payload" hidden></pre>
+      </div>
+
+      <div class="tab" id="tab-federated" hidden>
+        <h3>Federated improvement</h3>
+        <p class="muted">A real FedAvg round across institution nodes. Weights move; raw data does not.</p>
+        <button id="run-fed" class="ask">Run a federated round</button>
+        <div id="fed-result"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/shared.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

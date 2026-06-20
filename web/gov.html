@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tributo — Institution Console</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <div>
+        <h1>Tributo — Institution Console</h1>
+        <p>Federated improvement · oversight · escalations</p>
+      </div>
+    </div>
+    <div class="status">
+      <span class="pill" id="pill-model">model …</span>
+      <a class="console-link" href="/">← Citizen app</a>
+    </div>
+  </header>
+
+  <p class="mock-note">Operator console for councils, Citizens Advice and advisers. Citizens never see this — it's where institutions collaborate (federated) and oversee the service (accountability).</p>
+
+  <nav class="tabs gov-tabs" id="tabs" style="padding: 0 28px; max-width: 1280px; margin: 0 auto;">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="federated">Federated</button>
+    <button data-tab="oversight">Oversight</button>
+    <button data-tab="escalations">Escalations</button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+
+  <main style="padding: 16px 28px 40px; max-width: 1280px; margin: 0 auto;">
+    <section class="tab" id="tab-overview">
+      <div class="metric-cards" id="metrics"></div>
+      <p class="muted">Live from the audit log. Every citizen answer is logged with provenance; these are the headline accountability numbers a service owner or regulator would watch.</p>
+    </section>
+
+    <section class="tab" id="tab-federated" hidden>
+      <div class="panel">
+        <h3>Federated improvement (FL Alliance)</h3>
+        <p class="muted">Institutions improve the shared tax model on their own local data. Only model weights move; raw citizen data never leaves a node.</p>
+        <button id="run-fed" class="ask">Run a federated round</button>
+        <div id="fed-result"></div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-oversight" hidden>
+      <div class="gov-grid">
+        <div class="panel">
+          <h3>Audit trail</h3>
+          <div style="overflow: auto; max-height: 480px;">
+            <table class="gtable" id="audit-table">
+              <thead><tr><th>Time</th><th>Confidence</th><th>Provider</th><th>Src</th><th>Question (redacted)</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="acct-actions">
+            <button id="view-transparency">ATRS record</button>
+            <button id="view-modelcard">Model card</button>
+          </div>
+          <pre id="acct-doc" class="payload">Open the ATRS transparency record or the model card.</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-escalations" hidden>
+      <div class="panel">
+        <h3>Escalation queue</h3>
+        <p class="muted">Questions the AI handed to a human. A caseworker picks these up with the full redacted context.</p>
+        <div id="escalations"></div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-settings" hidden>
+      <div class="panel">
+        <h3>Deployment settings</h3>
+        <pre id="settings" class="payload">…</pre>
+        <p class="muted">Read-only here. In a real deployment these are configured per institution: model, redaction policy, escalation thresholds, corpus, branding.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/shared.js"></script>
+  <script src="/gov.js"></script>
+</body>
+</html>
