@@ -146,6 +146,8 @@ backend contract.
 
 ## User flow: the citizen side
 
+![App screenshot](screenshots/citizen.png)
+
 The dominant channel is voice and visual. The citizen never touches a setting or a dashboard. Their
 whole world is: speak, hear, see the proof, follow the steps.
 
@@ -202,6 +204,8 @@ sequenceDiagram
 ```
 
 ## User flow: the government side
+
+![App screenshot](screenshots/console)
 
 The same engine drives a completely different surface. Institutions never see the voice app. They
 operate the dashboard at `/gov.html`.
