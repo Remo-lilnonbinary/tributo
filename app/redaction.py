@@ -37,7 +37,15 @@ _REGEX_PATTERNS: list[tuple[str, re.Pattern]] = [
     ("EMAIL", re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")),
     ("PHONE", re.compile(r"(?:\+44\s?7\d{3}|\b07\d{3})\s?\d{3}\s?\d{3}\b")),
     ("POSTCODE", re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b")),
-    ("AMOUNT", re.compile(r"£\s?\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|£\s?\d+(?:\.\d{1,2})?")),
+    # Matches £-prefixed amounts AND word-form amounts ("10,000 pounds", "10000 gbp"), plus a
+    # k/m suffix ("£10k"). Word-form matters because voice transcription and plain typing often
+    # produce "pounds"/"gbp" with no £ symbol, and an un-redacted income figure defeats the point.
+    ("AMOUNT", re.compile(
+        r"£\s?\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?(?:\s?[km])?"
+        r"|£\s?\d+(?:\.\d{1,2})?(?:\s?[km])?"
+        r"|\b\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?\s?(?:pounds?|gbp|quid)\b"
+        r"|\b\d+(?:\.\d{1,2})?\s?(?:pounds?|gbp|quid)\b",
+        re.I)),
     # Trigger phrase is case-insensitive; the captured name must stay capitalised.
     ("PERSON", re.compile(r"\b(?i:my name is|i am called|i'?m called|call me|name'?s)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})")),
 ]

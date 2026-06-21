@@ -1,0 +1,42 @@
+/* ============================================================
+   PECAN · SPACING, LAYOUT & RADII TOKENS
+   4px base grid. The pixel unit (--px) ties spacing to the
+   8-bit motif so retro elements snap to the same rhythm.
+   ============================================================ */
+
+:root {
+  /* ---- Pixel unit (drives the 8-bit motif) ---- */
+  --px: 4px;  /* @kind spacing */
+
+  /* ---- Spacing scale (4px grid) ---- */
+  --space-0:  0;
+  --space-1:  0.25rem;   /*  4 */
+  --space-2:  0.5rem;    /*  8 */
+  --space-3:  0.75rem;   /* 12 */
+  --space-4:  1rem;      /* 16 */
+  --space-5:  1.5rem;    /* 24 */
+  --space-6:  2rem;      /* 32 */
+  --space-7:  2.5rem;    /* 40 */
+  --space-8:  3rem;      /* 48 */
+  --space-9:  4rem;      /* 64 */
+  --space-10: 5rem;      /* 80 */
+  --space-12: 7rem;      /* 112 */
+  --space-14: 9rem;      /* 144 */
+
+  /* ---- Layout ---- */
+  --wrap:        1200px;  /* default content max-width */
+  --wrap-narrow: 760px;   /* prose / reading width     */
+  --wrap-wide:   1320px;  /* full product surfaces     */
+  --gutter:      clamp(1.25rem, 4vw, 2rem);  /* @kind spacing */
+  --section-y:   clamp(4rem, 8vw, 7rem);  /* @kind spacing */
+
+  /* ---- Corner radii ---- */
+  --r-pixel: 0px;     /* sharp — pixel / retro elements */
+  --r-xs:    4px;
+  --r-sm:    7px;
+  --r-md:    11px;
+  --r-lg:    16px;
+  --r-xl:    22px;
+  --r-2xl:   30px;
+  --r-pill:  999px;
+}

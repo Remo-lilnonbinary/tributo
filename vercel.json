@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "echo \"No build step — serving the static Tributo UI/ folder\"",
+  "outputDirectory": "UI",
+  "trailingSlash": false
+}

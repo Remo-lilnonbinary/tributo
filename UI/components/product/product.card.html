@@ -1,0 +1,68 @@
+<!-- @dsCard group="Components" viewport="700x560" name="Advisor & trust" subtitle="AdvisorAvatar · Citation/Fact · Confidence · Redaction · Reasoning" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;background:var(--paper);font-family:var(--font-body);color:var(--ink);padding:24px}
+  .sec{margin-bottom:24px}
+  .lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px}
+  .row{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+  .panel{background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:20px;max-width:520px}
+</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+</head><body>
+<div id="root"></div>
+<script type="text/babel">
+  function ns(...names){for(const k of Object.keys(window)){const v=window[k];if(v&&typeof v==='object'&&names.every(n=>typeof v[n]==='function'))return v;}return {};}
+  const { AdvisorAvatar, CitationChip, ConfidenceMeter, RedactionChip, ReasoningTrace } =
+    ns('AdvisorAvatar','CitationChip','ConfidenceMeter','RedactionChip','ReasoningTrace');
+  const L = ({children}) => <div className="lbl">{children}</div>;
+  function Demo(){
+    return (
+      <div>
+        <div className="sec"><L>Advisor, backend-driven states</L>
+          <div className="row">
+            {['idle','listening','thinking','speaking'].map(m=>(
+              <div key={m} style={{textAlign:'center'}}>
+                <AdvisorAvatar mode={m} size={110}/>
+                <div style={{fontSize:12,fontWeight:600,marginTop:4}}>{m}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="sec"><L>Citations & facts</L>
+          <div className="row">
+            <CitationChip kind="source" provenance="govuk" index={1} label="Self Assessment tax returns" href="#"/>
+            <CitationChip kind="source" provenance="hmrc" index={2} label="SA100 notes 2024" href="#"/>
+            <CitationChip kind="fact" value="£1,000" sourceRef="[1]"/>
+            <CitationChip kind="fact" value="31 Jan 2026" sourceRef="[2]"/>
+          </div>
+        </div>
+        <div className="sec"><L>Redaction, what left the device</L>
+          <div className="row">
+            <RedactionChip type="NAME" token="[NAME]"/>
+            <RedactionChip type="UTR" token="••••• 8821"/>
+            <RedactionChip type="ADDRESS" token="[ADDRESS]" count={2}/>
+          </div>
+        </div>
+        <div className="sec"><L>Confidence & reasoning</L>
+          <div className="row" style={{alignItems:'flex-start'}}>
+            <div className="panel" style={{flex:'1 1 220px'}}>
+              <ConfidenceMeter value={92} floor={75} caption="Grounded in HMRC's own guidance."/>
+            </div>
+            <div className="panel" style={{flex:'1 1 260px'}}>
+              <ReasoningTrace steps={[
+                {planner:'decompose',question:'Crossed the £1,000 trading allowance?',coverage:96,sources:2,facts:3,state:'done'},
+                {planner:'decompose',question:'What is the filing deadline?',coverage:88,sources:1,facts:2,state:'active'},
+                {planner:'expand',question:'Any payments on account?',state:'pending'},
+              ]}/>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script>
+</body></html>

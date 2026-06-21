@@ -1,0 +1,60 @@
+<!-- @dsCard group="Components" viewport="700x460" name="Core" subtitle="Button · Input · Badge · Tag · Avatar · Card" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;background:var(--paper);font-family:var(--font-body);color:var(--ink);padding:24px}
+  .sec{margin-bottom:22px}
+  .lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+</head><body>
+<div id="root"></div>
+<script type="text/babel">
+  function ns(...names){for(const k of Object.keys(window)){const v=window[k];if(v&&typeof v==='object'&&names.every(n=>typeof v[n]==='function'))return v;}return {};}
+  const { Button, Input, Card, Badge, Tag, Avatar } = ns('Button','Input','Card','Badge','Tag','Avatar');
+  const Section = ({label, children}) => (
+    <div className="sec"><div className="lbl">{label}</div><div className="row">{children}</div></div>
+  );
+  function Demo(){
+    const [sel,setSel] = React.useState('Redaction demo');
+    return (
+      <div>
+        <Section label="Buttons">
+          <Button variant="primary">Ask the advisor</Button>
+          <Button variant="secondary">See sources</Button>
+          <Button variant="ghost">Skip</Button>
+          <Button variant="console" shape="sharp" size="sm">Run round</Button>
+          <Button variant="primary" loading>Working</Button>
+          <Button variant="primary" disabled>Disabled</Button>
+        </Section>
+        <Section label="Status badges">
+          <Badge tone="grounded" dot>Grounded</Badge>
+          <Badge tone="escalated" dot>Escalated to human</Badge>
+          <Badge tone="redaction" dot>3 items redacted</Badge>
+          <Badge tone="live" dot>Answering now</Badge>
+          <Badge tone="neutral">Draft</Badge>
+        </Section>
+        <Section label="Quick-start tags">
+          {['Redaction demo','Multi-part question','Escalation','Off-topic'].map(t=>(
+            <Tag key={t} interactive selected={sel===t} onClick={()=>setSel(t)}>{t}</Tag>
+          ))}
+        </Section>
+        <Section label="Avatars">
+          <Avatar name="Aisha Khan" tone="human" />
+          <Avatar name="You" tone="citizen" />
+          <Avatar tone="advisor" name="Advisor" />
+        </Section>
+        <Section label="Input">
+          <div style={{width:340}}>
+            <Input label="Your question" hint="Plain English is fine." placeholder="Do I need to file a Self Assessment?" />
+          </div>
+        </Section>
+      </div>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script>
+</body></html>

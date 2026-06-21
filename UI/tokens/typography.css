@@ -1,0 +1,45 @@
+/* ============================================================
+   TRIBUTO, TYPOGRAPHY TOKENS
+   Headings/display: Hanken Grotesk.  Body/UI: Inter.
+   Mono: IBM Plex Mono.
+   Accessibility-first: large base size (citizen body = 19px,
+   matching public-service reading standards), generous leading.
+   ============================================================ */
+:root {
+  --font-display: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-heading: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* Weights */
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+  --fw-black:   800;
+
+  /* Type scale, size / line-height pairs.
+     Citizen surface reads big & calm; console steps down one rung. */
+  --t-display-1: 56px;  --lh-display-1: 60px;  /* hero advisor moments */
+  --t-display-2: 44px;  --lh-display-2: 50px;
+  --t-h1:        36px;  --lh-h1:        42px;
+  --t-h2:        28px;  --lh-h2:        34px;
+  --t-h3:        22px;  --lh-h3:        28px;
+  --t-h4:        18px;  --lh-h4:        24px;
+
+  --t-body-lg:   19px;  --lh-body-lg:   30px;  /* citizen reading default */
+  --t-body:      17px;  --lh-body:      26px;  /* console default */
+  --t-body-sm:   15px;  --lh-body-sm:   22px;
+  --t-caption:   13px;  --lh-caption:   18px;
+  --t-micro:     11px;  --lh-micro:     15px;
+
+  --t-mono:      14px;  --lh-mono:      22px;
+  --t-mono-sm:   12.5px;--lh-mono-sm:   19px;
+
+  /* Tracking */
+  --track-tight:  -0.02em;  /* display */
+  --track-snug:   -0.01em;  /* headings */
+  --track-normal:  0;
+  --track-label:   0.04em;  /* eyebrow / overline uppercase */
+  --track-wide:    0.08em;
+}

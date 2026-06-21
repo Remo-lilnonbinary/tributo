@@ -1,0 +1,6 @@
+/* Tributo typefaces
+   Headings/display: Hanken Grotesk (humanist, sturdy, warm)
+   Body/UI: Inter
+   Mono (citations, audit, payloads, redaction tokens): IBM Plex Mono
+   All Google-hosted so the system ports cleanly. */
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;450;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');

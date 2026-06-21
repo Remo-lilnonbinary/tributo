@@ -1,0 +1,51 @@
+/* ============================================================
+   TRIBUTO, BASE
+   Light reset + accessibility primitives. Visual styling lives
+   in tokens and in component inline styles; this file only sets
+   sensible defaults and the things that MUST be global
+   (focus-visible, reduced motion already in motion.css,
+   selection, screen-reader helpers).
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6, p, figure { margin: 0; }
+
+a { color: var(--blue-600); text-underline-offset: 0.15em; }
+
+button { font-family: inherit; }
+
+::selection { background: var(--signal-100); color: var(--ink); }
+
+/* Accessibility, visible focus everywhere (GOV.UK yellow block).
+   Only on keyboard focus, so pointer users don't see it. */
+:focus-visible {
+  outline: var(--focus-w) solid var(--focus-yellow);
+  outline-offset: 0;
+  box-shadow: 0 2px 0 0 var(--focus-ink);
+}
+
+/* Screen-reader-only text (captions, labels that pair with icons) */
+.tributo-sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* Readable measure helper */
+.tributo-measure { max-width: var(--container-text); }

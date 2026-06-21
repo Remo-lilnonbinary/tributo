@@ -1,0 +1,329 @@
+<!-- @dsCard group="Console" viewport="1100x900" name="Operator console (GOV.UK)" subtitle="GDS Design System: masthead, stat tiles, plain tables" -->
+<!DOCTYPE html><html lang="en-GB"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tributo Console — GOV.UK</title>
+<style>
+  *{box-sizing:border-box}
+  html{font-size:100%}
+  body{margin:0;background:#fff;color:#0b0c0c;font-family:Arial,Helvetica,sans-serif;font-size:19px;line-height:1.31;-webkit-font-smoothing:antialiased}
+  a{color:#1d70b8;text-decoration:underline;text-underline-offset:.1em}
+  a:hover{color:#003078;text-decoration-thickness:3px}
+  a:focus{outline:3px solid transparent;color:#0b0c0c;background:#fd0;box-shadow:0 -2px #fd0,0 4px #0b0c0c;text-decoration:none}
+  h1,h2,h3,h4{font-weight:700;color:#0b0c0c;margin:0}
+  table{border-collapse:collapse;width:100%;font-size:17px}
+  caption{text-align:left}
+  th,td{text-align:left;padding:10px 20px 10px 0;border-bottom:1px solid #b1b4b6;vertical-align:top}
+  th{font-weight:700}
+  button{font-family:inherit;font-size:17px;cursor:pointer}
+  .lede{font-size:19px}
+  .scrolly::-webkit-scrollbar{width:10px;height:10px}
+  .scrolly::-webkit-scrollbar-thumb{background:#b1b4b6}
+  @media print{.no-print{display:none}}
+</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/jsx-src" id="appsrc">
+const { useState, useEffect, useRef } = React;
+const BLUE='#1d70b8', DBLUE='#003078', GREEN='#00703c', DGREEN='#002d18', RED='#d4351c', BLACK='#0b0c0c', MID='#505a5f', LGREY='#f3f2f1', BORDER='#b1b4b6', TEAL='#28a197';
+
+function Crown(){
+  return <svg width="36" height="32" viewBox="0 0 36 32" fill="#fff" style={{marginRight:8,verticalAlign:'middle'}} aria-hidden="true">
+    <path d="M11 6.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm14 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM18 3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm10 16c0-2-1-3-2.5-4.5C24 13 22 13 18 13s-6 0-7.5 1.5C9 16 8 17 8 19c0 1 .5 2 2 2.5 0 0 1 .5 1 1.5 0 1.5-1 2-1 2h16s-1-.5-1-2c0-1 1-1.5 1-1.5 1.5-.5 2-1.5 2-2.5Z"/>
+    <rect x="6" y="25" width="24" height="2.4"/>
+  </svg>;
+}
+
+function Tag({tone='blue',children}){
+  const c={blue:['#d2e2f1',DBLUE],green:['#cce2d8','#005a30'],red:['#f6d7d2','#942514'],yellow:['#fff7bf','#594d00'],grey:['#eeefb','#383f43']}[tone]||['#d2e2f1',DBLUE];
+  return <strong style={{display:'inline-block',background:c[0],color:c[1],fontSize:14,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',padding:'2px 8px',whiteSpace:'nowrap'}}>{children}</strong>;
+}
+function GButton({variant='green',children,onClick,disabled,style}){
+  const v={green:{bg:GREEN,sh:DGREEN,fg:'#fff'},grey:{bg:LGREY,sh:'#929191',fg:BLACK},blue:{bg:BLUE,sh:DBLUE,fg:'#fff'}}[variant];
+  return <button onClick={onClick} disabled={disabled} style={{display:'inline-block',background:v.bg,color:v.fg,border:'2px solid transparent',padding:'8px 12px 7px',fontWeight:700,boxShadow:`0 2px 0 ${v.sh}`,opacity:disabled?.5:1,cursor:disabled?'default':'pointer',...style}}>{children}</button>;
+}
+function Token({children}){
+  return <span style={{fontFamily:'monospace',fontSize:14,background:'#fff7bf',padding:'1px 5px',whiteSpace:'nowrap'}}>{children}</span>;
+}
+function redact(text){
+  return text.split(/(\[[A-Z]+\])/).map((p,i)=>/^\[[A-Z]+\]$/.test(p)?<Token key={i}>{p}</Token>:p);
+}
+function H1({children}){return <h1 style={{fontSize:36,lineHeight:1.09,marginBottom:20}}>{children}</h1>;}
+function H2({children,style}){return <h2 style={{fontSize:24,lineHeight:1.2,margin:'0 0 15px',...style}}>{children}</h2>;}
+function Rule({size='m'}){return <hr style={{border:0,borderTop:`${size==='l'?2:1}px solid ${BORDER}`,margin:'25px 0'}}/>;}
+
+/* ---------- stat tile (Notify style) ---------- */
+function Stat({n,label,status,tone='green'}){
+  const sc={green:GREEN,red:RED,grey:MID}[tone];
+  return <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
+    <div style={{background:BLUE,color:'#fff',padding:'15px 15px 16px',flex:'1 0 auto'}}>
+      <span style={{display:'block',fontSize:40,fontWeight:700,lineHeight:1}}>{n}</span>
+      <span style={{display:'block',marginTop:8,fontSize:19,lineHeight:1.2}}>{label}</span>
+    </div>
+    {status&&<div style={{background:sc,color:'#fff',padding:'9px 12px',fontSize:14,fontWeight:700,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{status}</div>}
+  </div>;
+}
+
+/* ---------- data ---------- */
+const AUDIT=[
+  {t:'14:08:22',conf:96,src:3,q:'Do I need to file a Self Assessment if I earned over [AMOUNT] from [WORK]?',st:'grounded'},
+  {t:'14:07:51',conf:58,src:2,q:'How do I declare an unequal share of [PROPERTY] income held with [PERSON]?',st:'escalated'},
+  {t:'14:06:30',conf:91,src:2,q:'When is the deadline to pay my [AMOUNT] payment on account?',st:'grounded'},
+  {t:'14:05:12',conf:88,src:4,q:'Can I claim the trading allowance and expenses for [BUSINESS]?',st:'grounded'},
+  {t:'14:03:47',conf:62,src:1,q:'Is my [BENEFIT] taxable now that I moved to [COUNTRY]?',st:'escalated'},
+  {t:'14:02:09',conf:97,src:2,q:'What is the personal allowance for the [YEAR] tax year?',st:'grounded'},
+  {t:'14:00:55',conf:93,src:3,q:'Do I pay Class 2 National Insurance on [AMOUNT] of profit?',st:'grounded'},
+];
+const ESCALATIONS=[
+  {id:'ESC-4471',conf:58,age:'4 minutes',topic:'Foreign property, unequal split',q:'My ex and I co-own a rental flat abroad and split the income unevenly. How do I declare my share?',reason:'Low coverage on unequal beneficial split and treaty position.',steps:[['Decompose','Is the foreign property income reportable in the UK?',84],['Decompose','How is an unequal beneficial split declared?',46],['Expand','Does a double-taxation treaty change the position?',38]],redactions:['NAME','ADDRESS','ADDRESS','NINO']},
+  {id:'ESC-4470',conf:62,age:'11 minutes',topic:'Benefit taxability after relocation',q:'Is my [BENEFIT] taxable now that I moved to [COUNTRY]?',reason:'Corpus lacks current bilateral agreement detail.',steps:[['Decompose','Is the benefit taxable in the UK?',71],['Expand','Does residency change the treatment?',44]],redactions:['NAME','BENEFIT','COUNTRY']},
+  {id:'ESC-4468',conf:49,age:'26 minutes',topic:'Estate and inheritance interaction',q:'How does inheriting [ASSET] affect my Self Assessment this year?',reason:'High-stakes, multi-domain (IHT and SA). Policy: always escalate.',steps:[['Decompose','Is the inherited asset income-generating?',55],['Expand','Does it interact with the estate return?',31]],redactions:['NAME','ASSET','AMOUNT']},
+];
+const SETTINGS=[
+  ['Model','tributo-gov-uk-1','Retrieval-grounded, UK tax corpus v2026.2'],
+  ['Redaction policy','strict-on-device','NAME, ADDRESS, UTR, NINO, DOB, EMAIL, PHONE, ACCOUNT removed before egress'],
+  ['Retrieval backend','hybrid-bm25+dense','GOV.UK, HMRC manuals, legislation.gov.uk'],
+  ['Escalation thresholds','confidence < 75%, coverage < 60%','High-stakes domains always escalate'],
+  ['Corpus','uk-tax-2026.2','1.2M passages, refreshed nightly, provenance pinned'],
+  ['Federated learning','FedAvg, 4 nodes','Differential privacy e=2.0, no raw rows egress'],
+];
+const MCARD=[['Architecture','Retrieval-grounded language model'],['Training data','UK tax corpus 2026.2'],['Intended use','UK Self Assessment guidance for citizens'],['Out of scope','Binding determinations, filing to HMRC, tax-avoidance advice'],['Evaluation','Grounded 94.2%, refusal-correct 99.1%'],['Bias review','Quarterly, last 2026 Q2']];
+
+const TABS=[{k:'overview',label:'Overview'},{k:'federated',label:'Federated learning'},{k:'oversight',label:'Oversight'},{k:'escalations',label:'Escalations'},{k:'settings',label:'Settings'}];
+
+function App(){
+  const [tab,setTab]=useState('overview');
+  return <div>
+    {/* GOV.UK masthead */}
+    <header>
+      <div style={{background:BLACK,borderBottom:`4px solid ${BLUE}`}}>
+        <div style={{maxWidth:1100,margin:'0 auto',padding:'8px 20px',display:'flex',alignItems:'center',gap:16,flexWrap:'wrap'}}>
+          <span style={{display:'flex',alignItems:'center'}}><Crown/><span style={{color:'#fff',fontSize:30,fontWeight:700,letterSpacing:'.02em'}}>GOV.UK</span></span>
+          <span style={{color:'#fff',fontSize:19,fontWeight:700,borderLeft:'1px solid #6f777b',paddingLeft:16}}>Tributo Console</span>
+          <nav className="no-print" style={{marginLeft:'auto',display:'flex',gap:18,alignItems:'center',fontSize:16}}>
+            <a href="#" style={{color:'#fff'}}>Support</a>
+            <a href="#" style={{color:'#fff'}}>Documentation</a>
+            <span style={{color:'#fff'}}>H. Mensah</span>
+            <a href="#" style={{color:'#fff'}}>Sign out</a>
+          </nav>
+        </div>
+      </div>
+      {/* service banner */}
+      <div style={{maxWidth:1100,margin:'0 auto',padding:'12px 20px',display:'flex',alignItems:'baseline',gap:14}}>
+        <strong style={{fontSize:19}}>HMRC · Self Assessment deployment</strong>
+        <span style={{color:MID,fontSize:16}}>region UK-South</span>
+        <a className="no-print" href="#" style={{marginLeft:'auto',fontSize:16}}>Switch service</a>
+      </div>
+      <div style={{borderBottom:`1px solid ${BORDER}`}}/>
+    </header>
+
+    {/* body: side nav + main */}
+    <div style={{maxWidth:1100,margin:'0 auto',padding:'0 20px',display:'flex',gap:40,alignItems:'flex-start'}}>
+      <nav className="no-print" style={{flex:'0 0 200px',paddingTop:30,position:'sticky',top:0}}>
+        <ul style={{listStyle:'none',margin:0,padding:0}}>
+          {TABS.map(t=>{const on=tab===t.k;return <li key={t.k} style={{marginBottom:2}}>
+            <button onClick={()=>setTab(t.k)} style={{display:'block',width:'100%',textAlign:'left',background:on?LGREY:'transparent',border:'none',borderLeft:`4px solid ${on?BLUE:'transparent'}`,padding:'10px 12px',fontSize:19,fontWeight:on?700:400,color:on?BLACK:BLUE,textDecoration:on?'none':'underline',textUnderlineOffset:'.1em'}}>{t.label}</button>
+          </li>;})}
+        </ul>
+      </nav>
+      <main className="scrolly" style={{flex:1,minWidth:0,paddingTop:30,paddingBottom:60}}>
+        {tab==='overview'&&<Overview/>}
+        {tab==='federated'&&<Federated/>}
+        {tab==='oversight'&&<Oversight/>}
+        {tab==='escalations'&&<Escalations/>}
+        {tab==='settings'&&<Settings/>}
+      </main>
+    </div>
+
+    {/* GOV.UK footer */}
+    <footer style={{borderTop:`1px solid ${BORDER}`,background:LGREY,marginTop:20}}>
+      <div style={{maxWidth:1100,margin:'0 auto',padding:'25px 20px',fontSize:16,color:MID,display:'flex',gap:20,flexWrap:'wrap',alignItems:'center'}}>
+        <a href="#">Accessibility statement</a><a href="#">Privacy</a><a href="#">Algorithmic transparency record</a>
+        <span style={{marginLeft:'auto'}}>© Crown copyright</span>
+      </div>
+    </footer>
+  </div>;
+}
+
+function Overview(){
+  return <div>
+    <H1>In the last 7 days</H1>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:20,marginBottom:40,alignItems:'stretch'}}>
+      <Stat n="24,817" label="questions answered" status="94.2% grounded"/>
+      <Stat n="6.2%" label="escalation rate" status="within target"/>
+      <Stat n="1,544" label="escalated to a human" status="all reviewed"/>
+      <Stat n="81,440" label="PII items redacted" status="100% on-device"/>
+    </div>
+
+    <H2>Most answered topics this week</H2>
+    <table>
+      <thead><tr><th>Topic</th><th style={{textAlign:'right'}}>Questions</th><th style={{textAlign:'right'}}>Grounded</th><th style={{textAlign:'right'}}>Escalated</th></tr></thead>
+      <tbody>
+        {[['Self Assessment deadlines','5,212','98%','0.4%'],['Self-employment income','4,118','95%','3.1%'],['Personal allowance and bands','3,540','99%','0.2%'],['Property and rental income','2,201','88%','9.7%'],['Foreign and cross-border income','1,109','71%','22.4%']].map((r,i)=>(
+          <tr key={i}><td>{r[0]}</td><td style={{textAlign:'right'}}>{r[1]}</td><td style={{textAlign:'right'}}>{r[2]}</td><td style={{textAlign:'right'}}>{r[3]}</td></tr>
+        ))}
+      </tbody>
+    </table>
+  </div>;
+}
+
+function Federated(){
+  const [state,setState]=useState('idle'); const [prog,setProg]=useState(0); const t=useRef([]);
+  useEffect(()=>()=>t.current.forEach(clearTimeout),[]);
+  const run=()=>{setState('running');setProg(0);let p=0;const step=()=>{p+=5;setProg(Math.min(100,p));if(p<100)t.current.push(setTimeout(step,110));else setState('done');};step();};
+  const nodes=[['London','SA-South','PAYE and side income','6,210',41],['Leeds','SA-North','Self-employment','4,880',38],['Cardiff','SA-Wales','Property income','3,120',33],['Belfast','SA-NI','Cross-border','2,540',29]];
+  return <div>
+    <H1>Federated learning</H1>
+    <p className="lede" style={{maxWidth:640,marginTop:0}}>Institutions train on their own caseloads and share only model updates. No raw taxpayer data is ever pooled.</p>
+
+    <div style={{margin:'20px 0'}}><GButton onClick={run} disabled={state==='running'}>{state==='running'?'Running round…':state==='done'?'Run another round':'Run a federated round'}</GButton></div>
+
+    {state!=='idle'&&<div style={{marginBottom:20}}>
+      <div style={{height:10,background:LGREY,border:`1px solid ${BORDER}`,marginBottom:6}}><div style={{height:'100%',width:`${prog}%`,background:TEAL,transition:'width .1s linear'}}/></div>
+      <p style={{margin:0,fontSize:16,color:MID,fontFamily:'monospace'}}>{state==='running'?`Aggregating encrypted gradients… ${prog}%`:'Aggregation complete'} · e=2.0 differential privacy</p>
+    </div>}
+
+    <H2>Participating nodes</H2>
+    <table>
+      <thead><tr><th>Institution</th><th>Specialism</th><th style={{textAlign:'right'}}>Local examples</th><th style={{textAlign:'right'}}>Local-only accuracy</th><th>Status</th></tr></thead>
+      <tbody>{nodes.map((n,i)=>(
+        <tr key={i}><td><strong>{n[0]}</strong><br/><span style={{color:MID,fontSize:14,fontFamily:'monospace'}}>{n[1]}</span></td><td>{n[2]}</td><td style={{textAlign:'right'}}>{n[3]}</td><td style={{textAlign:'right'}}>{n[4]}%</td>
+          <td>{state==='idle'?<span style={{color:MID}}>Idle</span>:state==='running'?<span style={{color:DBLUE}}>Training…</span>:<Tag tone="green">Update submitted</Tag>}</td></tr>
+      ))}</tbody>
+    </table>
+
+    <div style={{borderLeft:`5px solid ${GREEN}`,padding:'10px 0 10px 20px',margin:'25px 0'}}>
+      <strong style={{fontSize:19}}>Zero raw rows left the building.</strong><br/>
+      <span style={{color:MID}}>Only model updates were shared. {state==='done'?'16,750 local examples contributed; none transmitted.':'Raw taxpayer data never leaves a node.'}</span>
+    </div>
+
+    {state==='done'&&<><H2>Held-out accuracy, before and after</H2>
+      {[['Best single node',37,BORDER],['After federated round',70,GREEN]].map((r,i)=>(
+        <div key={i} style={{display:'flex',alignItems:'center',gap:15,marginBottom:12}}>
+          <span style={{width:180,fontSize:17}}>{r[0]}</span>
+          <div style={{flex:1,height:24,background:LGREY,maxWidth:460}}><div style={{height:'100%',width:`${r[1]}%`,background:r[2],transition:'width .5s'}}/></div>
+          <strong style={{width:50}}>{r[1]}%</strong>
+        </div>))}
+      <p style={{color:GREEN,fontWeight:700,marginTop:6}}>+33 percentage points over the best single node · round 1,204 · committed 14:09 BST</p>
+      <Rule/></>}
+
+    <H2>How a round works</H2>
+    <ol style={{paddingLeft:22,fontSize:17,lineHeight:1.5,maxWidth:680}}>
+      <li style={{marginBottom:8}}><strong>Train locally.</strong> Each institution trains on its own caseload. Raw taxpayer rows never move.</li>
+      <li style={{marginBottom:8}}><strong>Share updates only.</strong> Only the learned model weights leave a node, never a single taxpayer row.</li>
+      <li style={{marginBottom:8}}><strong>Average (FedAvg).</strong> Tributo averages every update into one shared model, weighted by data size.</li>
+      <li><strong>Everyone improves.</strong> The smarter shared model returns to every institution.</li>
+    </ol>
+  </div>;
+}
+
+function Oversight(){
+  return <div>
+    <H1>Oversight</H1>
+    <H2>Audit trail</H2>
+    <p style={{marginTop:0,color:MID,fontSize:16}}>Append-only and hash-chained. Every answer is logged with its provenance. Personal details are redacted.</p>
+    <table>
+      <thead><tr><th>Time</th><th>Confidence</th><th>Sources</th><th>Redacted question</th></tr></thead>
+      <tbody>{AUDIT.map((r,i)=>(
+        <tr key={i}><td style={{fontFamily:'monospace',color:MID}}>{r.t}</td>
+          <td><strong style={{color:r.st==='grounded'?GREEN:RED}}>{r.conf}%</strong></td>
+          <td>{r.src}</td>
+          <td style={{maxWidth:380}}>{redact(r.q)}</td></tr>
+      ))}</tbody>
+    </table>
+    <p style={{marginTop:10}}><a href="#" onClick={e=>e.preventDefault()}>Export audit trail (CSV)</a></p>
+
+    <Rule size="l"/>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:40}}>
+      <div>
+        <H2>Transparency record</H2>
+        <p style={{marginTop:0}}><Tag tone="green">Published</Tag></p>
+        <dl style={{margin:0}}>{[['Standard','Algorithmic Transparency Recording Standard'],['Tier 1','Public summary, live'],['Tier 2','Detailed record, live'],['Owner','HMRC Digital'],['Last reviewed','30 May 2026']].map((r,i)=>(
+          <div key={i} style={{padding:'10px 0',borderBottom:`1px solid ${BORDER}`}}><dt style={{color:MID,fontSize:16}}>{r[0]}</dt><dd style={{margin:'2px 0 0',fontWeight:700}}>{r[1]}</dd></div>
+        ))}</dl>
+        <p style={{marginTop:12}}><a href="#" onClick={e=>e.preventDefault()}>View the ATRS record</a></p>
+      </div>
+      <div>
+        <H2>Model card</H2>
+        <p style={{marginTop:0}}><Tag tone="grey">tributo-gov-uk-1</Tag></p>
+        <dl style={{margin:0}}>{MCARD.map((r,i)=>(
+          <div key={i} style={{padding:'10px 0',borderBottom:`1px solid ${BORDER}`}}><dt style={{color:MID,fontSize:16}}>{r[0]}</dt><dd style={{margin:'2px 0 0',fontWeight:r[0]==='Out of scope'?700:400,color:r[0]==='Out of scope'?RED:BLACK}}>{r[1]}</dd></div>
+        ))}</dl>
+      </div>
+    </div>
+  </div>;
+}
+
+function Escalations(){
+  const [sel,setSel]=useState(ESCALATIONS[0].id);
+  const e=ESCALATIONS.find(x=>x.id===sel);
+  return <div>
+    <H1>Escalations</H1>
+    <p className="lede" style={{marginTop:0}}>Questions the AI handed to a human, with full redacted context. <strong>{ESCALATIONS.length} waiting.</strong></p>
+    <div style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:40,alignItems:'start'}}>
+      <div>
+        <H2 style={{fontSize:19}}>Queue</H2>
+        <ul style={{listStyle:'none',margin:0,padding:0}}>{ESCALATIONS.map(x=>{const on=x.id===sel;return <li key={x.id} style={{marginBottom:0,borderBottom:`1px solid ${BORDER}`}}>
+          <button onClick={()=>setSel(x.id)} style={{display:'block',width:'100%',textAlign:'left',background:on?LGREY:'transparent',border:'none',borderLeft:`4px solid ${on?BLUE:'transparent'}`,padding:'12px'}}>
+            <span style={{display:'flex',justifyContent:'space-between'}}><span style={{fontFamily:'monospace',fontSize:14,color:MID}}>{x.id}</span><strong style={{color:RED,fontSize:14}}>{x.conf}%</strong></span>
+            <span style={{display:'block',fontWeight:700,fontSize:17,margin:'4px 0 2px',color:on?BLACK:BLUE,textDecoration:on?'none':'underline'}}>{x.topic}</span>
+            <span style={{display:'block',color:MID,fontSize:14}}>waiting {x.age}</span>
+          </button>
+        </li>;})}</ul>
+      </div>
+      <div>
+        <div style={{display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap',marginBottom:8}}><H2 style={{fontSize:24}}>{e.topic}</H2><span style={{fontFamily:'monospace',color:MID,fontSize:16}}>{e.id}</span></div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:18}}><Tag tone="red">Confidence {e.conf}%, below floor</Tag>{e.redactions.map((r,i)=><Tag key={i} tone="yellow">{r}</Tag>)}</div>
+
+        <h3 style={{fontSize:16,color:MID,textTransform:'uppercase',letterSpacing:'.04em',marginBottom:8}}>Citizen question (redacted)</h3>
+        <div style={{borderLeft:`5px solid ${BORDER}`,padding:'5px 0 5px 20px',fontSize:19,marginBottom:20}}>{redact(e.q)}</div>
+
+        <h3 style={{fontSize:16,color:MID,textTransform:'uppercase',letterSpacing:'.04em',marginBottom:6}}>Why it escalated</h3>
+        <p style={{marginTop:0}}>{e.reason}</p>
+
+        <h3 style={{fontSize:16,color:MID,textTransform:'uppercase',letterSpacing:'.04em',marginBottom:6}}>Reasoning trace</h3>
+        <table style={{marginBottom:20}}>
+          <thead><tr><th>Step</th><th>Sub-question</th><th style={{textAlign:'right'}}>Coverage</th></tr></thead>
+          <tbody>{e.steps.map((s,i)=>(
+            <tr key={i}><td><Tag tone="blue">{s[0]}</Tag></td><td>{s[1]}</td><td style={{textAlign:'right'}}><strong style={{color:s[2]<60?RED:GREEN}}>{s[2]}%</strong></td></tr>
+          ))}</tbody>
+        </table>
+        <div style={{display:'flex',gap:12}}><GButton>Take this case</GButton><GButton variant="grey">Reassign</GButton></div>
+      </div>
+    </div>
+  </div>;
+}
+
+function Settings(){
+  return <div>
+    <H1>Settings</H1>
+    <div style={{borderLeft:`5px solid ${BORDER}`,padding:'5px 0 5px 20px',margin:'0 0 25px',color:MID}}>Read-only. Deployment configuration is managed through change control.</div>
+    <H2>Deployment configuration</H2>
+    <dl style={{margin:0,borderTop:`1px solid ${BORDER}`}}>
+      {SETTINGS.map((r,i)=>(
+        <div key={i} style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:20,padding:'15px 0',borderBottom:`1px solid ${BORDER}`}}>
+          <dt style={{fontWeight:700}}>{r[0]}</dt>
+          <dd style={{margin:0}}><span style={{fontFamily:'monospace',fontSize:16}}>{r[1]}</span><br/><span style={{color:MID,fontSize:16}}>{r[2]}</span></dd>
+        </div>
+      ))}
+    </dl>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+<script>
+  (function(){
+    function boot(){
+      var src=document.getElementById('appsrc').textContent;
+      var out=Babel.transform(src,{presets:[[Babel.availablePresets.react,{runtime:'classic'}]]}).code;
+      (0,eval)(out);
+    }
+    if(document.readyState!=='loading') boot();
+    else document.addEventListener('DOMContentLoaded',boot);
+  })();
+</script>
+</body></html>

@@ -1,0 +1,189 @@
+{
+  "pack_name": "Pip Animation Asset Pack",
+  "version": "0.1",
+  "source_image": "00_original/pip_asset_sheet_original.jpg",
+  "character": {
+    "name": "Pip",
+    "role": "Visual tax advisory companion for an app UI",
+    "design_summary": "Friendly anthropomorphic cream document with mint folded corner, dark navy limbs, navy satchel, expressive dark eyes, and mint checkmark smile.",
+    "tone": [
+      "trustworthy",
+      "calm",
+      "playful",
+      "reassuring",
+      "smart",
+      "human"
+    ],
+    "palette": {
+      "navy": "#0D1B2A",
+      "indigo": "#1E2A5A",
+      "mint": "#A7E3C1",
+      "cream": "#FFF6E6",
+      "slate": "#6B7280"
+    }
+  },
+  "assets": [
+    {
+      "id": "01_idle_seated_at_desk",
+      "label": "Idle mode / sitting at desk",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/01_idle_seated_at_desk_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/01_idle_seated_at_desk.png"
+    },
+    {
+      "id": "02_listening_to_user",
+      "label": "Listening to user",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/02_listening_to_user_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/02_listening_to_user.png"
+    },
+    {
+      "id": "03_standing_up",
+      "label": "Standing up",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/03_standing_up_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/03_standing_up.png"
+    },
+    {
+      "id": "04_thinking_hand_on_chin",
+      "label": "Thinking / hand on chin",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/04_thinking_hand_on_chin_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/04_thinking_hand_on_chin.png"
+    },
+    {
+      "id": "05_explaining_advice_pointing",
+      "label": "Explaining advice / pointing",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/05_explaining_advice_pointing_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/05_explaining_advice_pointing.png"
+    },
+    {
+      "id": "06_speaking_with_gestures",
+      "label": "Speaking with gestures",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/06_speaking_with_gestures_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/06_speaking_with_gestures.png"
+    },
+    {
+      "id": "07_holding_a_document",
+      "label": "Holding a document",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/07_holding_a_document_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/07_holding_a_document.png"
+    },
+    {
+      "id": "08_reassuring_user",
+      "label": "Reassuring user",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/08_reassuring_user_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/08_reassuring_user.png"
+    },
+    {
+      "id": "09_conversing_active_listening",
+      "label": "Conversing / active listening",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/09_conversing_active_listening_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/09_conversing_active_listening.png"
+    },
+    {
+      "id": "10_sitting_back_down",
+      "label": "Sitting back down",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/10_sitting_back_down_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/10_sitting_back_down.png"
+    },
+    {
+      "id": "11_sitting_idle_alternate",
+      "label": "Sitting idle alternate",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/11_sitting_idle_alternate_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/11_sitting_idle_alternate.png"
+    },
+    {
+      "id": "12_happy_waving",
+      "label": "Happy / waving",
+      "type": "pose",
+      "raw_cell": "01_raw_pose_cells/12_happy_waving_raw_cell.png",
+      "transparent_sprite": "02_transparent_pose_sprites/12_happy_waving.png"
+    },
+    {
+      "id": "01_calm_smiling",
+      "label": "Calm / smiling",
+      "type": "expression",
+      "file": "03_expression_cells/01_calm_smiling.png"
+    },
+    {
+      "id": "02_thoughtful",
+      "label": "Thoughtful",
+      "type": "expression",
+      "file": "03_expression_cells/02_thoughtful.png"
+    },
+    {
+      "id": "03_concerned_empathetic",
+      "label": "Concerned / empathetic",
+      "type": "expression",
+      "file": "03_expression_cells/03_concerned_empathetic.png"
+    },
+    {
+      "id": "04_surprised_delighted",
+      "label": "Surprised / delighted",
+      "type": "expression",
+      "file": "03_expression_cells/04_surprised_delighted.png"
+    },
+    {
+      "id": "05_determined",
+      "label": "Determined",
+      "type": "expression",
+      "file": "03_expression_cells/05_determined.png"
+    },
+    {
+      "id": "06_winking",
+      "label": "Winking",
+      "type": "expression",
+      "file": "03_expression_cells/06_winking.png"
+    },
+    {
+      "id": "07_laughing",
+      "label": "Laughing",
+      "type": "expression",
+      "file": "03_expression_cells/07_laughing.png"
+    },
+    {
+      "id": "01_smile_closed",
+      "label": "Closed smile / resting",
+      "type": "mouth_shape",
+      "file": "04_mouth_shapes/01_smile_closed.png"
+    },
+    {
+      "id": "02_open_smile",
+      "label": "Open smile / speaking happy",
+      "type": "mouth_shape",
+      "file": "04_mouth_shapes/02_open_smile.png"
+    },
+    {
+      "id": "03_small_o",
+      "label": "Small O",
+      "type": "mouth_shape",
+      "file": "04_mouth_shapes/03_small_o.png"
+    },
+    {
+      "id": "04_large_o",
+      "label": "Large O",
+      "type": "mouth_shape",
+      "file": "04_mouth_shapes/04_large_o.png"
+    },
+    {
+      "id": "05_flat_line",
+      "label": "Flat line / neutral",
+      "type": "mouth_shape",
+      "file": "04_mouth_shapes/05_flat_line.png"
+    },
+    {
+      "id": "06_f_v_shape",
+      "label": "F/V mouth shape",
+      "type": "mouth_shape",
+      "file": "04_mouth_shapes/06_f_v_shape.png"
+    }
+  ]
+}

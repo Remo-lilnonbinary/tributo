@@ -1,0 +1,112 @@
+{
+  "component_name": "PipAdvisorMascot",
+  "implementation_style": "Static PNG pose swapping with optional CSS micro-animations; designed for Lovable/React UI build.",
+  "states": [
+    {
+      "state": "idle",
+      "asset": "02_transparent_pose_sprites/01_idle_seated_at_desk.png",
+      "loop": true,
+      "suggested_micro_animation": "slow breathing scale(1 -> 1.015), subtle blink every 4-6s",
+      "trigger": "default state when chat is inactive"
+    },
+    {
+      "state": "listening",
+      "asset": "02_transparent_pose_sprites/02_listening_to_user.png",
+      "loop": true,
+      "suggested_micro_animation": "small lean forward and tiny head nod",
+      "trigger": "user focuses input or starts typing"
+    },
+    {
+      "state": "standingUp",
+      "asset": "02_transparent_pose_sprites/03_standing_up.png",
+      "duration_ms": 450,
+      "trigger": "user submits message"
+    },
+    {
+      "state": "thinking",
+      "asset": "02_transparent_pose_sprites/04_thinking_hand_on_chin.png",
+      "loop": true,
+      "duration_ms": 1200,
+      "suggested_micro_animation": "gentle bob; show small loading dots beside Pip",
+      "trigger": "AI response is being generated"
+    },
+    {
+      "state": "explaining",
+      "asset": "02_transparent_pose_sprites/05_explaining_advice_pointing.png",
+      "loop": true,
+      "suggested_micro_animation": "gesture pulse; slight side-to-side movement",
+      "trigger": "AI response starts streaming with recommendation"
+    },
+    {
+      "state": "speaking",
+      "asset": "02_transparent_pose_sprites/06_speaking_with_gestures.png",
+      "loop": true,
+      "suggested_micro_animation": "mouth-shape alternation if used; small hand bounce",
+      "trigger": "AI response continues streaming"
+    },
+    {
+      "state": "holdingDocument",
+      "asset": "02_transparent_pose_sprites/07_holding_a_document.png",
+      "duration_ms": 900,
+      "trigger": "AI references a tax document, checklist, return, or uploaded file"
+    },
+    {
+      "state": "reassuring",
+      "asset": "02_transparent_pose_sprites/08_reassuring_user.png",
+      "duration_ms": 900,
+      "trigger": "AI gives caveat, reassurance, next step, or confidence note"
+    },
+    {
+      "state": "conversing",
+      "asset": "02_transparent_pose_sprites/09_conversing_active_listening.png",
+      "loop": true,
+      "trigger": "active back-and-forth dialogue"
+    },
+    {
+      "state": "sittingBackDown",
+      "asset": "02_transparent_pose_sprites/10_sitting_back_down.png",
+      "duration_ms": 500,
+      "trigger": "AI finishes response and chat becomes idle"
+    },
+    {
+      "state": "idleAlt",
+      "asset": "02_transparent_pose_sprites/11_sitting_idle_alternate.png",
+      "loop": true,
+      "trigger": "alternate idle pose after response"
+    },
+    {
+      "state": "happy",
+      "asset": "02_transparent_pose_sprites/12_happy_waving.png",
+      "duration_ms": 1200,
+      "trigger": "first load, successful completion, tax task finished"
+    }
+  ],
+  "recommended_flow": [
+    "idle",
+    "listening",
+    "standingUp",
+    "thinking",
+    "explaining",
+    "speaking",
+    "reassuring",
+    "sittingBackDown",
+    "idleAlt"
+  ],
+  "event_mapping": {
+    "input_focus": "listening",
+    "input_typing": "listening",
+    "message_submit": "standingUp -> thinking",
+    "response_loading": "thinking",
+    "response_streaming": "explaining or speaking",
+    "response_mentions_document": "holdingDocument",
+    "response_completed": "reassuring -> sittingBackDown -> idleAlt",
+    "user_inactive_10s": "idle",
+    "success_moment": "happy"
+  },
+  "logging_requirements": [
+    "Log every mascot state change with previous state, next state, event, timestamp.",
+    "Log when an asset fails to load and fall back to idle.",
+    "Log user interaction triggers only; do not log sensitive tax content.",
+    "Respect privacy: never store user tax details in mascot animation logs."
+  ]
+}

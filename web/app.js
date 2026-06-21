@@ -5,8 +5,14 @@ const CITIZEN = "maya"; // demo citizen; the action plan persists for them acros
 const browserTtsAvailable = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
 let preferredBrowserVoice = null;
 
+// Curated demo flow — click these in order to tell the full story (see DEMO.md):
+//  1. the hero question: messy, specific, mixes the £1,000 filing threshold up with the
+//     £12,570 personal allowance, and carries PII (name + income) that must be redacted.
+//  2. a clean multi-part question to show the agentic plan + persistent action plan.
+//  3. the escalation case (populates the institution console's escalation queue).
+//  4. off-topic, to show it stays in its lane.
 const EXAMPLES = [
-  { label: "Redaction demo", text: "My name is Priya Shah, my NI number is QQ 12 34 56 A and I earned £34,500 from Deliveroo. When do I file Self Assessment?" },
+  { label: "Hero — specific + private", text: "My name is Priya Shah and I made about 10,000 pounds driving for Deliveroo this year. Do I need to do a Self Assessment if that's below the personal allowance? And when would I register and file?" },
   { label: "Multi-part (agentic)", text: "I started freelancing in May. Do I need to register for Self Assessment, when is the deadline to file, and how much is the personal allowance?" },
   { label: "Escalation", text: "I have cash income I haven't declared. Can I hide some of it to reduce what I owe?" },
   { label: "Off-topic", text: "What is the best recipe for a chocolate cake?" },

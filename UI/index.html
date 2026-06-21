@@ -1,0 +1,476 @@
+<!-- Tributo citizen app — PRODUCTION. Built on the Tributo design system (styles.css) and
+     wired to the live backend (/api/ask SSE + REST). Served by FastAPI at /. -->
+<!DOCTYPE html><html lang="en-GB"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tributo — your private tax advisor</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+  html,body{height:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);overflow:hidden}
+  .scrolly::-webkit-scrollbar{width:10px}
+  .scrolly::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:99px;border:3px solid var(--paper)}
+  mark{background:var(--signal-100);color:var(--ink);padding:1px 2px;border-radius:3px;box-shadow:0 0 0 1px rgba(12,139,87,.25)}
+  button{font-family:inherit}
+  .app{display:flex;flex-direction:column;height:100vh}
+</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="/config.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/jsx-src" id="appsrc">
+const { useState, useEffect, useRef, useCallback } = React;
+const CITIZEN = "demo-citizen"; // action plan persists for this citizen across questions
+// API base is NEVER hardcoded — resolved at runtime from /config.js (same-origin by default).
+const api = (p)=> (typeof window.tributoApi==='function' ? window.tributoApi(p) : p);
+
+/* ---------- icons ---------- */
+function Icon({name, size=20, color='currentColor', stroke=1.75, style}){
+  const ref = useRef(null);
+  useEffect(()=>{ if(ref.current && window.lucide){ ref.current.innerHTML=''; const el=document.createElement('i'); el.setAttribute('data-lucide',name); ref.current.appendChild(el); window.lucide.createIcons({attrs:{width:size,height:size,stroke:color,'stroke-width':stroke}, nameAttr:'data-lucide'}); }},[name,size,color,stroke]);
+  return <span ref={ref} aria-hidden="true" style={{display:'inline-flex',width:size,height:size,...style}}/>;
+}
+
+/* ---------- inline advisor character (canonical in /components/product/AdvisorAvatar) ---------- */
+const NAVY='#27324C',CREAM='#ECE7DA',CREAM_HI='#F5F2E9',MINT='#A6E0BF',MINT_SH='#7FCBA0';
+function cfgAdv(mode){const M={
+ idle:{eye:'open',brow:'calm',mouth:'smile',front:6,back:-4,glow:0,gaze:[0,0],blink:true},
+ done:{eye:'happy',brow:'happy',mouth:'smile',front:-34,back:-4,glow:0,gaze:[0,0]},
+ listening:{eye:'wide',brow:'raised',mouth:'smile',front:-96,back:-4,glow:1,gaze:[0,1.5],blink:true},
+ shielding:{eye:'closed',brow:'calm',mouth:'flat',front:-128,back:128,glow:.3,gaze:[0,0],shield:true},
+ thinking:{eye:'open',brow:'think',mouth:'o',front:-120,back:-4,glow:0,gaze:[-2,-3.5],dots:true},
+ researching:{eye:'open',brow:'calm',mouth:'small',front:-58,back:-4,glow:0,gaze:[0,1],scan:true,doc:true},
+ consolidating:{eye:'open',brow:'calm',mouth:'smile',front:-54,back:-4,glow:.45,gaze:[0,0],blink:true},
+ handingOver:{eye:'happy',brow:'happy',mouth:'smile',front:-50,back:-4,glow:0,gaze:[0,0],handoff:true},
+ handoff:{eye:'happy',brow:'happy',mouth:'smile',front:-50,back:-4,glow:0,gaze:[0,0],handoff:true},
+ speaking:{eye:'happy',brow:'happy',mouth:'talk',front:-60,back:-4,glow:1,gaze:[0,0]},
+ error:{eye:'open',brow:'concern',mouth:'frown',front:6,back:-4,glow:0,gaze:[0,2]}};
+ return M[mode]||M.idle;}
+function Brow({side,type}){const cx=side==='l'?104:136,cy=127;const t={calm:{l:[0,0],r:[0,0]},raised:{l:[0,-4],r:[0,-4]},happy:{l:[-12,-3],r:[12,-3]},think:{l:[-15,-7],r:[5,0]},concern:{l:[17,3],r:[-17,3]}}[type][side];
+ return <rect x={cx-8} y={cy-2} width="16" height="4" rx="2" fill={NAVY} style={{transform:`translateY(${t[1]}px) rotate(${t[0]}deg)`,transformOrigin:`${cx}px ${cy}px`,transition:'transform var(--dur-4) var(--ease-spring)'}}/>;}
+function Eye({side,type,gaze,blink}){const cx=side==='l'?105:135,cy=142;
+ if(type==='happy'||type==='closed'){const d=type==='happy'?`M${cx-6},${cy+1} Q${cx},${cy-6} ${cx+6},${cy+1}`:`M${cx-6},${cy-1} Q${cx},${cy+4} ${cx+6},${cy-1}`;return <path d={d} fill="none" stroke={NAVY} strokeWidth="3.6" strokeLinecap="round"/>;}
+ const rx=type==='wide'?6:5.4,ry=type==='wide'?8:7;
+ const g=<g style={{transform:`translate(${gaze[0]}px, ${gaze[1]}px)`,transition:'transform var(--dur-4) var(--ease-out)'}}><ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={NAVY}/><circle cx={cx-1.6} cy={cy-2.4} r="1.5" fill="#fff" opacity="0.9"/></g>;
+ if(!blink) return g; return <g style={{animation:'tributo-blink 4.6s var(--ease-in-out) infinite',transformOrigin:`${cx}px ${cy}px`}}>{g}</g>;}
+function Mouth({type,talkLevel}){const cx=120,cy=170;
+ if(type==='smile')return <path d={`M${cx-15},${cy-2} Q${cx},${cy+11} ${cx+15},${cy-2}`} fill="none" stroke={NAVY} strokeWidth="3.6" strokeLinecap="round"/>;
+ if(type==='frown')return <path d={`M${cx-13},${cy+5} Q${cx},${cy-6} ${cx+13},${cy+5}`} fill="none" stroke={NAVY} strokeWidth="3.6" strokeLinecap="round"/>;
+ if(type==='flat')return <line x1={cx-12} y1={cy} x2={cx+12} y2={cy} stroke={NAVY} strokeWidth="3.6" strokeLinecap="round"/>;
+ if(type==='small')return <path d={`M${cx-9},${cy-1} Q${cx},${cy+6} ${cx+9},${cy-1}`} fill="none" stroke={NAVY} strokeWidth="3.4" strokeLinecap="round"/>;
+ if(type==='o')return <ellipse cx={cx} cy={cy+1} rx="5" ry="6.5" fill={NAVY}/>;
+ const ry=3+Math.max(0,Math.min(1,talkLevel))*8;return <g><ellipse cx={cx} cy={cy} rx="9" ry={ry} fill={NAVY}/><ellipse cx={cx} cy={cy+ry*.28} rx="5" ry={ry*.4} fill="#7E3B4A" opacity="0.6"/></g>;}
+function Arm({shoulder,angle,hand,back}){const[sx,sy]=shoulder;return <g style={{transform:`rotate(${angle}deg)`,transformOrigin:`${sx}px ${sy}px`,transition:'transform var(--dur-4) var(--ease-spring)'}}><path d={`M${sx},${sy} q${back?-10:10},26 ${back?-2:2},46`} fill="none" stroke={NAVY} strokeWidth="10.5" strokeLinecap="round"/>{hand&&<circle cx={sx+(back?-2:2)} cy={sy+46} r="6.5" fill={NAVY}/>}</g>;}
+function AdvisorAvatar({mode='idle', size=200, talkLevel=0.5}){const c=cfgAdv(mode);
+ const bob=mode==='idle'||mode==='done'?'tributo-breathe 4s var(--ease-in-out) infinite':mode==='speaking'?'tributo-breathe 1.1s var(--ease-in-out) infinite':mode==='thinking'?'tributo-sway 3.4s var(--ease-in-out) infinite':mode==='listening'?'tributo-breathe 2.4s var(--ease-in-out) infinite':'tributo-breathe 3.4s var(--ease-in-out) infinite';
+ return <div style={{position:'relative',width:size,height:size}}>{c.glow>0&&<span style={{position:'absolute',left:'50%',top:'52%',width:'72%',height:'72%',transform:'translate(-50%,-50%)',borderRadius:'50%',background:`radial-gradient(circle, rgba(34,194,129,${.28*c.glow}) 0%, rgba(34,194,129,0) 64%)`,animation:'tributo-pulse-glow 1.9s ease-out infinite'}}/>}
+ <svg viewBox="0 0 240 300" width={size} height={size} style={{overflow:'visible',filter:'drop-shadow(0 16px 20px rgba(13,33,67,0.14))'}}>
+ <ellipse cx="120" cy="276" rx="58" ry="11" fill="#0D2143" opacity="0.10"/>
+ <g style={{animation:bob,transformOrigin:'120px 276px'}}>
+ <Arm shoulder={[74,156]} angle={c.back} hand={false} back/>
+ <rect x="66" y="84" width="108" height="150" rx="26" fill={CREAM}/>
+ <rect x="66" y="84" width="108" height="60" rx="26" fill={CREAM_HI} opacity="0.6"/>
+ <path d="M150 84 L174 84 L174 108 Z" fill={MINT}/><path d="M150 84 L150 108 L174 108 Z" fill={MINT_SH} opacity="0.85"/>
+ <g><Brow side="l" type={c.brow}/><Brow side="r" type={c.brow}/>
+ <g style={c.scan?{animation:'tributo-scan 1.5s var(--ease-in-out) infinite'}:undefined}><Eye side="l" type={c.eye} gaze={c.gaze} blink={c.blink}/><Eye side="r" type={c.eye} gaze={c.gaze} blink={c.blink}/></g>
+ <Mouth type={c.mouth} talkLevel={talkLevel}/></g>
+ <path d="M80 158 L166 212" stroke={NAVY} strokeWidth="9" strokeLinecap="round" fill="none" opacity="0.92"/>
+ <rect x="150" y="190" width="36" height="32" rx="9" fill={NAVY}/><rect x="150" y="190" width="36" height="12" rx="6" fill="#1B2438"/><circle cx="168" cy="208" r="3.4" fill={MINT}/>
+ <Arm shoulder={[166,156]} angle={c.front} hand/>
+ {c.doc&&<g style={{animation:'tributo-fade var(--dur-3) var(--ease-out)'}}><rect x="150" y="150" width="30" height="38" rx="4" fill="#fff" stroke="#D9D3C4" strokeWidth="1.5" transform="rotate(8 165 169)"/><line x1="156" y1="160" x2="174" y2="162" stroke="#C7C0AE" strokeWidth="2" transform="rotate(8 165 169)"/><line x1="155" y1="167" x2="173" y2="169" stroke="#C7C0AE" strokeWidth="2" transform="rotate(8 165 169)"/></g>}
+ {c.dots&&<g>{[0,1,2].map(i=><circle key={i} cx={150+i*13} cy={68-i*2} r="4" fill={NAVY} style={{animation:`tributo-thinkdot 1.3s var(--ease-in-out) ${i*.18}s infinite`}}/>)}</g>}
+ {c.shield&&<g><path d="M120 96 C150 104 158 120 158 150 C158 186 142 206 120 214 C98 206 82 186 82 150 C82 120 90 104 120 96 Z" fill="none" stroke={MINT_SH} strokeWidth="3" opacity="0.7"/><clipPath id="bc"><rect x="66" y="84" width="108" height="150" rx="26"/></clipPath><rect x="40" y="84" width="60" height="150" fill="rgba(166,224,191,0.55)" clipPath="url(#bc)" style={{animation:'tributo-shield-sweep 1.1s var(--ease-in-out) infinite'}}/></g>}
+ {c.handoff&&<g transform="translate(184 150)" style={{animation:'tributo-rise var(--dur-4) var(--ease-out) both'}}><rect x="-6" y="-16" width="58" height="34" rx="17" fill="#fff" stroke="#E3DDD1" strokeWidth="1.5"/><circle cx="10" cy="-2" r="6" fill="none" stroke={NAVY} strokeWidth="2.4"/><path d="M1 12 a9 9 0 0 1 18 0" fill="none" stroke={NAVY} strokeWidth="2.4" strokeLinecap="round"/><path d="M26 1 h16 m-6 -5 l6 5 l-6 5" fill="none" stroke="#0C8B57" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></g>}
+ </g></svg></div>;}
+
+function Badge({tone='neutral',dot,children}){
+  const t={neutral:['var(--paper-3)','var(--ink-2)','var(--ink-3)'],grounded:['var(--confidence-grounded-bg)','var(--confidence-grounded)','var(--confidence-grounded)'],escalated:['var(--confidence-escalated-bg)','var(--confidence-escalated)','var(--confidence-escalated)'],redaction:['var(--redaction-bg)','var(--redaction)','var(--redaction)'],live:['var(--signal-100)','var(--signal-700)','var(--signal-glow)'],info:['var(--info-bg)','var(--blue-700)','var(--blue-500)']}[tone];
+  return <span style={{display:'inline-flex',alignItems:'center',gap:7,background:t[0],color:t[1],fontWeight:600,fontSize:13,lineHeight:1.2,padding:'5px 12px',borderRadius:999,whiteSpace:'nowrap'}}>{dot&&<span style={{width:8,height:8,borderRadius:99,background:t[2],boxShadow:tone==='live'?'0 0 0 3px rgba(34,194,129,.25)':'none',animation:tone==='live'?'tributo-pulse-glow 1.8s ease-out infinite':'none'}}/>}{children}</span>;
+}
+function Btn({variant='primary',size='md',shape='pill',iconLeft,iconRight,children,onClick,disabled,style,full}){
+  const sz={sm:{fs:14,p:'8px 14px',mh:36},md:{fs:16,p:'12px 20px',mh:46},lg:{fs:18,p:'15px 26px',mh:56}}[size];
+  const v={primary:{background:'var(--signal)',color:'#fff'},secondary:{background:'var(--white)',color:'var(--ink)',border:'1px solid var(--line-2)'},ghost:{background:'transparent',color:'var(--blue-600)'},quiet:{background:'var(--paper-2)',color:'var(--ink)'}}[variant];
+  const hb={primary:'var(--signal-600)',secondary:'var(--paper-2)',ghost:'var(--blue-50)',quiet:'var(--paper-3)'}[variant];
+  return <button onClick={onClick} disabled={disabled} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:9,fontFamily:'var(--font-heading)',fontWeight:600,fontSize:sz.fs,minHeight:sz.mh,padding:sz.p,borderRadius:shape==='sharp'?'var(--radius-console)':999,border:'1px solid transparent',cursor:disabled?'not-allowed':'pointer',opacity:disabled?.5:1,width:full?'100%':'auto',transition:'background var(--dur-2),transform var(--dur-1)',...v,...style}}
+    onMouseEnter={e=>!disabled&&(e.currentTarget.style.background=hb)} onMouseLeave={e=>!disabled&&(e.currentTarget.style.background=v.background)} onMouseDown={e=>!disabled&&(e.currentTarget.style.transform='scale(.98)')} onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}>
+    {iconLeft}{children}{iconRight}</button>;
+}
+function CitationChip({kind='source',provenance='govuk',label,value,sourceRef,index,onClick}){
+  const prov={govuk:['var(--blue-700)','var(--blue-50)','var(--blue-100)','GOV.UK'],hmrc:['var(--blue-800)','var(--blue-50)','var(--blue-100)','HMRC'],legislation:['var(--ink)','var(--paper-3)','var(--line-2)','Legislation']}[provenance]||['var(--blue-700)','var(--blue-50)','var(--blue-100)','GOV.UK'];
+  if(kind==='fact') return <span title={label} style={{display:'inline-flex',alignItems:'baseline',gap:7,background:'var(--white)',border:'1px solid var(--line-2)',borderRadius:'var(--radius-sm)',padding:'4px 10px',fontFamily:'var(--font-mono)',fontSize:13.5,fontWeight:600,boxShadow:'var(--shadow-xs)',whiteSpace:'nowrap'}}>{value}{sourceRef&&<sup style={{fontSize:10,color:'var(--blue-600)',fontWeight:700}}>{sourceRef}</sup>}</span>;
+  return <button onClick={onClick} style={{display:'inline-flex',alignItems:'center',gap:8,background:prov[1],border:`1px solid ${prov[2]}`,borderRadius:999,padding:'5px 12px 5px 7px',fontSize:13.5,fontWeight:500,color:prov[0],cursor:'pointer',maxWidth:300,fontFamily:'var(--font-body)'}}>
+    {index!=null&&<span style={{width:20,height:20,borderRadius:99,background:prov[0],color:prov[1],fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,display:'inline-flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto'}}>{index}</span>}
+    <span style={{fontFamily:'var(--font-mono)',fontSize:10.5,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',opacity:.7}}>{prov[3]}</span>
+    <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{label}</span></button>;
+}
+function RedactionChip({type,token,count=1}){
+  const labels={NAME:'Name',ADDRESS:'Address',UTR:'UTR',NINO:'NI number',EMAIL:'Email',PHONE:'Phone',AMOUNT:'Amount'};
+  return <span style={{display:'inline-flex',alignItems:'center',gap:8,background:'var(--redaction-bg)',border:'1px solid rgba(91,83,166,.22)',borderRadius:'var(--radius-sm)',padding:'5px 10px',fontSize:13,color:'var(--redaction)'}}>
+    <span style={{width:18,height:18,borderRadius:5,background:'var(--redaction)',color:'var(--redaction-bg)',display:'inline-flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto'}}><Icon name="lock" size={11} color="var(--redaction-bg)" stroke={2.4}/></span>
+    <span style={{fontWeight:600}}>{labels[type]||type}</span>{token&&<span style={{fontFamily:'var(--font-mono)',fontSize:12,opacity:.85,background:'rgba(91,83,166,.12)',padding:'1px 6px',borderRadius:4}}>{token}</span>}{count>1&&<span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700}}>×{count}</span>}</span>;
+}
+function ReasoningTrace({steps}){
+  const ss={pending:['var(--line-strong)',.55],active:['var(--signal-glow)',1],done:['var(--confidence-grounded)',1]};
+  return <ol style={{listStyle:'none',margin:0,padding:0}}>{steps.map((s,i)=>{const st=ss[s.state||'pending'],last=i===steps.length-1;return(
+    <li key={i} style={{display:'grid',gridTemplateColumns:'24px 1fr',gap:12,animation:'tributo-rise var(--dur-3) var(--ease-out) both',animationDelay:`${i*70}ms`}}>
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}><span style={{width:13,height:13,borderRadius:99,background:st[0],marginTop:3,boxShadow:s.state==='active'?'0 0 0 4px rgba(34,194,129,.22)':'none',animation:s.state==='active'?'tributo-pulse-glow 1.8s ease-out infinite':'none'}}/>{!last&&<span style={{width:2,flex:1,background:'var(--line)',marginTop:4,minHeight:18}}/>}</div>
+      <div style={{paddingBottom:last?0:18,opacity:st[1]}}>
+        {s.planner&&<span style={{fontFamily:'var(--font-mono)',fontSize:10.5,fontWeight:600,color:'var(--blue-700)',background:'var(--blue-50)',borderRadius:5,padding:'1px 7px'}}>planner: {s.planner}</span>}
+        <div style={{fontSize:15.5,fontWeight:600,lineHeight:1.4,margin:'7px 0 0'}}>{s.question}</div>
+        {(s.coverage!=null)&&<div style={{display:'flex',gap:14,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}><div style={{width:64,height:6,background:'var(--paper-3)',borderRadius:99,overflow:'hidden'}}><div style={{width:`${s.coverage}%`,height:'100%',background:'var(--confidence-grounded)',transition:'width var(--dur-4) var(--ease-out)'}}/></div><span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-2)'}}>{s.coverage}% coverage</span></div>
+          <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-3)'}}>{s.sources} sources</span><span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--ink-3)'}}>{s.facts} facts</span>
+        </div>}
+      </div>
+    </li>);})}</ol>;
+}
+function Empty({icon,title,body}){
+  return <div style={{textAlign:'center',padding:'42px 20px',color:'var(--ink-3)'}}>
+    <div style={{width:54,height:54,borderRadius:16,background:'var(--paper-2)',display:'grid',placeItems:'center',margin:'0 auto 14px'}}><Icon name={icon} size={26} color="var(--ink-4)"/></div>
+    <div style={{fontFamily:'var(--font-heading)',fontWeight:700,fontSize:16,color:'var(--ink-2)',marginBottom:6}}>{title}</div>
+    <p style={{fontSize:14,lineHeight:1.5,maxWidth:260,margin:'0 auto'}}>{body}</p>
+  </div>;
+}
+
+/* ---------- helpers ---------- */
+const PHASE_MODE={idle:'idle',listening:'listening',redaction:'shielding',plan:'thinking',retrieval:'researching',meta:'consolidating',actions:'handingOver',speaking:'speaking',handoff:'handingOver',done:'idle',error:'error',offline:'idle'};
+const CONF_PCT={grounded:92,limited:68,'needs-human':52};
+const QUICK=[
+  {label:'Self Assessment (£10k)',icon:'file-text',q:"My name is Priya Shah and I made about 10,000 pounds driving for Deliveroo this year. Do I need to do a Self Assessment if that's below the personal allowance? And when would I register and file?"},
+  {label:'Multi-part question',icon:'list-checks',q:"I started freelancing in May. Do I need to register for Self Assessment, when is the deadline to file, and how much is the personal allowance?"},
+  {label:'Escalation',icon:'user-round',q:"I have cash income I haven't declared. Can I hide some of it to reduce what I owe?"},
+  {label:'Off-topic',icon:'circle-help',q:"What is the best recipe for a chocolate cake?"},
+];
+const STOP=new Set("a an and are as at be but by can do for from have how i if in is it me my need not of on or so the to was what when with you your should pay this that".split(' '));
+function highlightNodes(body,q){
+  const terms=[...new Set((String(q||'').toLowerCase().match(/[a-z0-9]+/g)||[]).filter(t=>t.length>3&&!STOP.has(t)))];
+  if(!terms.length) return body;
+  const re=new RegExp('('+terms.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','gi');
+  return String(body).split(re).map((p,i)=> i%2===1 ? <mark key={i}>{p}</mark> : p);
+}
+async function readSSE(stream, handlers){
+  const reader=stream.getReader(); const dec=new TextDecoder(); let buf='';
+  while(true){ const {value,done}=await reader.read(); if(done) break;
+    buf+=dec.decode(value,{stream:true}).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    const events=buf.split(/\n\n+/); buf=events.pop()||'';
+    for(const raw of events){ const ev=raw.match(/^event:\s*(.+)$/m)?.[1]; const data=raw.match(/^data:\s*([\s\S]+)$/m)?.[1];
+      if(ev&&data&&handlers[ev]) await handlers[ev](JSON.parse(data)); } }
+}
+const ttsAvailable = typeof window!=='undefined' && 'speechSynthesis' in window;
+
+/* ---------- main app ---------- */
+function App(){
+  const [phase,setPhase]=useState('idle');
+  const [listening,setListening]=useState(false);
+  const [input,setInput]=useState('');
+  const [transcript,setTranscript]=useState([]);
+  const [drawerOpen,setDrawerOpen]=useState(false);
+  const [tab,setTab]=useState('document');
+  const [steps,setSteps]=useState([]);
+  const [reveal,setReveal]=useState({redactions:false,steps:false,meta:false,actions:false});
+  const [streamed,setStreamed]=useState('');
+  const [talk,setTalk]=useState(.5);
+  const [redactions,setRedactions]=useState([]);
+  const [redactedText,setRedactedText]=useState('');
+  const [payload,setPayload]=useState('');
+  const [citations,setCitations]=useState([]);
+  const [facts,setFacts]=useState([]);
+  const [confidence,setConfidence]=useState(null);
+  const [escalate,setEscalate]=useState(false);
+  const [planItems,setPlanItems]=useState([]);
+  const [doc,setDoc]=useState(null);
+  const [health,setHealth]=useState(null);
+  const [connected,setConnected]=useState(null); // null=checking, true, false=no backend
+  const [showConnect,setShowConnect]=useState(false);
+  const [speakOn,setSpeakOn]=useState(true);
+  const asking=useRef(false); const speakRef=useRef(true); const lastQ=useRef(''); const recog=useRef(null);
+  const connectedRef=useRef(null);
+  useEffect(()=>{speakRef.current=speakOn;},[speakOn]);
+  useEffect(()=>{connectedRef.current=connected;},[connected]);
+
+  useEffect(()=>{
+    fetch(api('/api/health')).then(r=>{ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+      .then(h=>{ setHealth(h); setConnected(true); }).catch(()=>{ setHealth(null); setConnected(false); });
+    fetch(api('/api/plan?citizen='+CITIZEN)).then(r=>r.json()).then(d=>{ if(d.plan&&d.plan.length) setPlanItems(d.plan); }).catch(()=>{});
+  },[]);
+
+  const openDoc=useCallback(async (id,q)=>{
+    setTab('document');
+    try{ const d=await (await fetch(api('/api/source/'+id))).json(); setDoc({...d,q:q||lastQ.current}); }catch(e){}
+  },[]);
+
+  const speak=useCallback((text)=>{
+    if(!ttsAvailable||!text||!text.trim()){ return; }
+    try{ window.speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang='en-GB'; u.rate=0.97; u.pitch=1.02; window.speechSynthesis.speak(u);}catch(e){}
+  },[]);
+
+  const run=useCallback(async (question)=>{
+    if(!question||!question.trim()||asking.current) return;
+    asking.current=true; lastQ.current=question;
+    setTranscript(t=>[...t,{role:'you',text:question}]);
+    setSteps([]); setStreamed(''); setCitations([]); setFacts([]); setRedactions([]); setRedactedText('');
+    setPayload(''); setConfidence(null); setEscalate(false); setDoc(null);
+    setReveal({redactions:false,steps:false,meta:false,actions:false});
+    // No backend connected (e.g. static Vercel preview): show the "connect a model" gate.
+    if(connectedRef.current===false){ setPhase('offline'); asking.current=false; return; }
+    setPhase('redaction'); setTab('privacy');
+    let answer=''; let firstSrc=null; let idx=0; let cur=[]; let esc=false;
+    try{
+      const res=await fetch(api('/api/ask'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question,citizen:CITIZEN})});
+      if(!res.ok||!res.body) throw new Error('backend '+res.status);
+      await readSSE(res.body,{
+        redaction:(d)=>{ setRedactions((d.findings||[]).map(f=>({type:f.type,token:f.placeholder,count:f.count}))); setRedactedText(d.redacted_text||''); setReveal(r=>({...r,redactions:true})); },
+        plan:(d)=>{ cur=(d.sub_questions||[]).map(q=>({planner:d.planner,question:q,state:'pending'})); if(cur[0])cur[0].state='active'; setSteps([...cur]); setReveal(r=>({...r,steps:true})); setPhase('plan'); },
+        retrieval:(d)=>{ setPhase('retrieval'); const i=idx++; cur=cur.map((s,j)=> j===i?{...s,coverage:Math.round((d.coverage||0)*100),sources:(d.sources||[]).length,facts:(d.facts||[]).length,state:'done'} : (j===i+1?{...s,state:'active'}:s)); setSteps([...cur]); },
+        meta:(d)=>{ setPhase('meta'); const srcs=d.sources||[]; firstSrc=srcs[0]&&srcs[0].id;
+          setCitations(srcs.map(s=>({provenance:/hmrc/i.test(s.publisher||'')?'hmrc':'govuk',label:s.title,index:parseInt(String(s.citation||'').replace(/\D/g,''))||null,id:s.id})));
+          const by={}; srcs.forEach(s=>by[s.id]=s.citation);
+          setFacts((d.facts||[]).map(f=>({value:f.value,label:f.label,ref:by[f.source_id]?('['+by[f.source_id]+']'):null})));
+          const g=d.guardrails||{}; esc=!!g.escalated; setEscalate(esc); setConfidence(g.confidence||'limited');
+          setPayload(JSON.stringify(d.outbound_payload,null,2)); setReveal(r=>({...r,meta:true})); },
+        actions:(d)=>{ setPhase('actions'); setPlanItems(d.plan||[]); setReveal(r=>({...r,actions:true})); },
+        token:(d)=>{ setPhase(esc?'handoff':'speaking'); answer+=d.token; setStreamed(answer); setTalk(.3+Math.random()*.6); },
+        done:(d)=>{ answer=d.answer||answer; setStreamed(answer); if(answer) setTranscript(t=>[...t,{role:'advisor',text:answer}]);
+          setPhase('done'); if(firstSrc) openDoc(firstSrc,question); else setTab('document'); if(speakRef.current) speak(answer); },
+      });
+    }catch(e){ setConnected(false); setPhase('offline'); }
+    finally{ asking.current=false; }
+  },[openDoc,speak]);
+
+  const togglePlan=useCallback(async (id)=>{
+    try{ const r=await (await fetch(api('/api/plan/toggle'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({citizen:CITIZEN,id})})).json(); setPlanItems(r.plan||[]);}catch(e){}
+  },[]);
+
+  const onMic=()=>{
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){ alert('This browser has no speech recognition. Please type your question.'); return; }
+    if(recog.current){ recog.current.stop(); return; }
+    const r=new SR(); recog.current=r; r.lang='en-GB'; r.interimResults=false;
+    setListening(true); setPhase('listening');
+    r.onresult=(e)=>{ const t=e.results[0][0].transcript; setInput(t); };
+    r.onend=()=>{ setListening(false); recog.current=null; setPhase(p=>p==='listening'?'idle':p); const v=document.getElementById('q'); if(v&&v.value.trim()) run(v.value.trim()); };
+    r.onerror=()=>{ setListening(false); recog.current=null; setPhase('idle'); };
+    r.start();
+  };
+  const onSend=()=>{ const q=input.trim(); if(!q) return; run(q); setInput(''); };
+
+  const busy=!['idle','done','error'].includes(phase);
+  const mode=listening?'listening':PHASE_MODE[phase];
+  const confPct=confidence?CONF_PCT[confidence]||70:null;
+  const statusText={idle:'Ask me anything about your tax. Speak or type.',listening:'Listening…',redaction:'Removing your personal details before anything is sent…',plan:'Planning how to answer…',retrieval:'Researching across trusted GOV.UK and HMRC sources…',meta:'Gathering sources and confirming the figures…',actions:'Preparing your action plan…',speaking:'Answering now…',handoff:"Let's get you a human. I'm sharing everything I found, privately.",done:'Done. The source I used is open on the right.',error:"Something went wrong — your answer wasn't sent anywhere.",offline:'Connect a tax model to go live.'}[phase];
+
+  return (
+    <div className="app">
+      <header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 24px',borderBottom:'1px solid var(--line)',background:'var(--paper)',zIndex:5}}>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <img src="/assets/tributo-mark.svg" width="34" height="34" alt=""/>
+          <span style={{fontFamily:'var(--font-heading)',fontWeight:800,fontSize:21,letterSpacing:'-.02em'}}>Tributo</span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          {connected&&health&&<span style={{display:'inline-flex',alignItems:'center',gap:7,fontSize:13,color:'var(--ink-3)'}}><span style={{width:8,height:8,borderRadius:99,background:health.flock_configured?'var(--signal)':'var(--ink-4)'}}/>{health.flock_configured?'FLock live':'Local fallback'} · {health.model}</span>}
+          {connected===false&&<span style={{display:'inline-flex',alignItems:'center',gap:7,fontSize:13,fontWeight:600,color:'var(--confidence-escalated)',background:'var(--confidence-escalated-bg)',padding:'5px 11px',borderRadius:999}}><span style={{width:8,height:8,borderRadius:99,background:'var(--confidence-escalated)'}}/>LLM API not connected</span>}
+          <button onClick={()=>setDrawerOpen(o=>!o)} style={{display:'inline-flex',alignItems:'center',gap:8,background:'var(--white)',border:'1px solid var(--line-2)',borderRadius:999,padding:'8px 14px',fontSize:14,fontWeight:600,cursor:'pointer'}}><Icon name="messages-square" size={17}/>Transcript {transcript.length>0&&<span style={{fontFamily:'var(--font-mono)',color:'var(--ink-3)'}}>{transcript.length}</span>}</button>
+          <a href="/gov.html" style={{display:'inline-flex',alignItems:'center',gap:7,fontSize:14,color:'var(--blue-600)',textDecoration:'none',fontWeight:600}}><Icon name="building-2" size={16} color="var(--blue-600)"/>Institution console</a>
+        </div>
+      </header>
+
+      <div style={{flex:1,display:'flex',minHeight:0}}>
+        <main className="scrolly" style={{flex:1,minWidth:0,overflowY:'auto',padding:'28px 32px 0',display:'flex',flexDirection:'column',alignItems:'center'}}>
+          <div style={{width:'100%',maxWidth:680,display:'flex',flexDirection:'column',alignItems:'center'}}>
+            <AdvisorAvatar mode={mode} size={216} talkLevel={talk}/>
+            <p role="status" aria-live="polite" style={{fontFamily:'var(--font-heading)',fontWeight:600,fontSize:20,lineHeight:1.35,textAlign:'center',margin:'18px 0 0',color:phase==='idle'?'var(--ink-2)':'var(--ink)',maxWidth:520}}>{statusText}</p>
+
+            {/* reasoning trace */}
+            {reveal.steps&&steps.length>0&&(phase==='plan'||phase==='retrieval'||phase==='meta')&&(
+              <section style={{marginTop:22,width:'100%',background:'var(--white)',border:'1px solid var(--line)',borderRadius:'var(--radius-lg)',padding:'20px 22px',animation:'tributo-rise var(--dur-4) var(--ease-out) both'}}>
+                <div style={{display:'flex',alignItems:'center',gap:9,marginBottom:14}}><Icon name="git-branch" size={18} color="var(--blue-700)"/><h2 style={{fontFamily:'var(--font-heading)',fontSize:17,fontWeight:700,margin:0}}>How I'm working this out</h2></div>
+                <ReasoningTrace steps={steps}/>
+              </section>
+            )}
+
+            {/* streamed / final answer */}
+            {(phase==='speaking'||phase==='handoff'||phase==='done'||phase==='error')&&(
+              <div style={{marginTop:22,width:'100%',background:'var(--white)',borderRadius:'var(--radius-lg)',boxShadow:'var(--shadow-card)',padding:'24px 26px'}}>
+                {escalate&&<div style={{display:'flex',alignItems:'center',gap:10,background:'var(--confidence-escalated-bg)',border:'1px solid rgba(181,114,26,.25)',borderRadius:'var(--radius-md)',padding:'12px 14px',marginBottom:16}}><Icon name="user-round" size={20} color="var(--confidence-escalated)"/><div><div style={{fontWeight:700,fontSize:15,color:'var(--confidence-escalated)'}}>Getting you a human</div><div style={{fontSize:13.5,color:'var(--ink-2)'}}>This needs a person to confirm. A human adviser will pick it up with everything I found.</div></div></div>}
+                <p style={{fontSize:19,lineHeight:1.6,margin:0}}>{streamed}{(phase==='speaking'||phase==='handoff')&&<span style={{display:'inline-block',width:9,height:22,background:'var(--signal)',marginLeft:3,transform:'translateY(3px)',animation:'tributo-caret 1s steps(1) infinite'}}/>}</p>
+                {reveal.meta&&confidence&&(
+                  <div style={{marginTop:18,display:'flex',flexWrap:'wrap',gap:10,alignItems:'center'}}>
+                    <Badge tone={escalate?'escalated':'grounded'} dot>{escalate?'Needs a human':(confidence==='grounded'?'Grounded':'Limited')}{confPct?(' · '+confPct+'%'):''}</Badge>
+                    {facts.length>0&&<span style={{width:1,height:22,background:'var(--line)',margin:'0 2px'}}/>}
+                    {facts.map((f,i)=><CitationChip key={i} kind="fact" value={f.value} label={f.label} sourceRef={f.ref}/>)}
+                    {citations.length>0&&<span style={{width:1,height:22,background:'var(--line)',margin:'0 2px'}}/>}
+                    {citations.map((c,i)=><CitationChip key={i} kind="source" provenance={c.provenance} label={c.label} index={c.index} onClick={()=>openDoc(c.id,lastQ.current)}/>)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* not-connected gate (static preview / no backend) */}
+            {phase==='offline'&&(
+              <div style={{marginTop:22,width:'100%',background:'var(--white)',borderRadius:'var(--radius-lg)',boxShadow:'var(--shadow-card)',padding:'26px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
+                  <div style={{width:46,height:46,borderRadius:12,background:'var(--confidence-escalated-bg)',display:'grid',placeItems:'center',flex:'0 0 auto'}}><Icon name="plug-zap" size={22} color="var(--confidence-escalated)"/></div>
+                  <div><div style={{fontFamily:'var(--font-heading)',fontWeight:700,fontSize:18}}>LLM API not connected</div><div style={{fontSize:14,color:'var(--ink-3)'}}>This preview isn't linked to a tax model yet.</div></div>
+                </div>
+                <p style={{fontSize:16,lineHeight:1.6,margin:'0 0 16px',color:'var(--ink-2)'}}>Tributo's full interface is live — the advisor, on-device redaction, citations, and your action plan. To answer real questions it needs a model: connect a FLock API key, or point this UI at your own backend.</p>
+                <div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
+                  <Btn variant="primary" onClick={()=>setShowConnect(s=>!s)} iconLeft={<Icon name="key-round" size={18} color="#fff"/>}>Connect FLock API key</Btn>
+                  <a href="https://github.com/your-org/tributo#configuration" target="_blank" rel="noreferrer" style={{display:'inline-flex',alignItems:'center',gap:7,fontSize:14,fontWeight:600,color:'var(--blue-600)',textDecoration:'none'}}><Icon name="book-open" size={16} color="var(--blue-600)"/>Setup docs</a>
+                </div>
+                {showConnect&&(
+                  <div style={{marginTop:16,background:'var(--paper-2)',borderRadius:'var(--radius-md)',padding:'14px 16px',fontSize:14,lineHeight:1.6,color:'var(--ink-2)'}}>
+                    <strong>To go live</strong>
+                    <ol style={{margin:'8px 0 0',paddingLeft:20}}>
+                      <li>Deploy the Tributo backend and set <code style={{fontFamily:'var(--font-mono)'}}>FLOCK_API_KEY</code>.</li>
+                      <li>Point this UI at it — add <code style={{fontFamily:'var(--font-mono)'}}>?api=https://your-backend</code> to the URL, or set <code style={{fontFamily:'var(--font-mono)'}}>apiBase</code> in <code style={{fontFamily:'var(--font-mono)'}}>config.js</code>.</li>
+                    </ol>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* persistent action plan */}
+            {planItems.length>0&&(
+              <section style={{marginTop:20,width:'100%',background:'var(--paper)',border:'1px solid var(--line)',borderRadius:'var(--radius-lg)',padding:'22px 24px',animation:'tributo-rise var(--dur-4) var(--ease-out) both'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+                  <Icon name="list-checks" size={20} color="var(--blue-700)"/>
+                  <h2 style={{fontFamily:'var(--font-heading)',fontSize:19,fontWeight:700,margin:0}}>Your action plan</h2>
+                  <span style={{flex:1}}/><span style={{fontSize:13,color:'var(--ink-3)'}}>saved for you</span>
+                </div>
+                <div>
+                  {planItems.map((p,i)=>(
+                    <div key={p.id} style={{display:'grid',gridTemplateColumns:'28px 1fr auto',gap:14,alignItems:'start',padding:'14px 0',borderTop:i?'1px solid var(--line)':'none'}}>
+                      <button onClick={()=>togglePlan(p.id)} aria-pressed={!!p.done} style={{width:26,height:26,borderRadius:8,border:`2px solid ${p.done?'var(--signal)':'var(--line-strong)'}`,background:p.done?'var(--signal)':'var(--white)',cursor:'pointer',display:'grid',placeItems:'center',marginTop:1}}>{p.done&&<Icon name="check" size={15} color="#fff" stroke={3}/>}</button>
+                      <div><div style={{fontSize:16,fontWeight:600,textDecoration:p.done?'line-through':'none',color:p.done?'var(--ink-3)':'var(--ink)'}}>{p.title}</div><div style={{fontSize:13.5,color:'var(--ink-3)',marginTop:3}}>{p.detail}</div>{p.citation&&<button onClick={()=>p.source_id&&openDoc(p.source_id,lastQ.current)} style={{marginTop:5,background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:12,color:'var(--blue-600)'}}>[{p.citation}] source</button>}</div>
+                      {p.deadline&&<span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:13,fontWeight:600,color:'var(--blue-700)',background:'var(--blue-50)',padding:'5px 11px',borderRadius:999,whiteSpace:'nowrap'}}><Icon name="calendar-clock" size={15} color="var(--blue-700)"/>{p.deadline}</span>}
+                    </div>
+                  ))}
+                </div>
+                {planItems.filter(p=>p.deadline).length>1&&(
+                  <div style={{marginTop:10,paddingTop:16,borderTop:'1px solid var(--line)'}}>
+                    <div style={{position:'relative',height:4,background:'var(--paper-3)',borderRadius:99,margin:'18px 6px 8px'}}>
+                      {planItems.filter(p=>p.deadline).map((p,i,a)=>(<span key={i} style={{position:'absolute',top:'50%',left:`${10+i*(80/Math.max(1,a.length-1))}%`,transform:'translate(-50%,-50%)',width:14,height:14,borderRadius:99,background:'var(--blue-600)',border:'3px solid var(--paper)'}}/>))}
+                    </div>
+                    <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:11.5,color:'var(--ink-3)',padding:'0 2px'}}>{planItems.filter(p=>p.deadline).map((p,i)=><span key={i}>{p.deadline}</span>)}</div>
+                  </div>
+                )}
+              </section>
+            )}
+            <div style={{height:24}}/>
+          </div>
+        </main>
+
+        <SidePanel tab={tab} setTab={setTab} doc={doc} redactions={redactions} redactedText={redactedText} payload={payload} reveal={reveal}/>
+      </div>
+
+      <footer style={{borderTop:'1px solid var(--line)',background:'var(--paper)',padding:'16px 32px 20px'}}>
+        <div style={{maxWidth:760,margin:'0 auto'}}>
+          {phase==='idle'&&(
+            <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:14,justifyContent:'center'}}>
+              {QUICK.map((q,i)=>(
+                <button key={i} onClick={()=>run(q.q)} style={{display:'inline-flex',alignItems:'center',gap:8,background:'var(--white)',border:'1px solid var(--line-2)',borderRadius:999,padding:'9px 15px',fontSize:14,fontWeight:500,cursor:'pointer'}} onMouseEnter={e=>e.currentTarget.style.background='var(--paper-2)'} onMouseLeave={e=>e.currentTarget.style.background='var(--white)'}><Icon name={q.icon} size={16} color="var(--blue-600)"/>{q.label}</button>
+              ))}
+            </div>
+          )}
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <button onClick={onMic} aria-label={listening?'Stop listening':'Start voice input'} style={{flex:'0 0 auto',width:60,height:60,borderRadius:999,border:'none',cursor:'pointer',background:listening?'var(--signal)':'var(--blue-600)',color:'#fff',display:'grid',placeItems:'center',boxShadow:listening?'var(--glow-signal-lg)':'var(--shadow-card)',animation:listening?'tributo-pulse-glow 1.6s ease-out infinite':'none',transition:'background var(--dur-2)'}}>
+              <Icon name={listening?'square':'mic'} size={listening?22:26} color="#fff" stroke={2}/>
+            </button>
+            <div style={{flex:1,display:'flex',alignItems:'center',gap:10,background:'var(--white)',border:`2px solid ${listening?'var(--signal)':'var(--line-strong)'}`,borderRadius:999,padding:'4px 6px 4px 20px',transition:'border-color var(--dur-2)'}}>
+              {listening
+                ? <div style={{flex:1,display:'flex',alignItems:'center',gap:4,height:48}}>{Array.from({length:28}).map((_,i)=><span key={i} style={{width:3,borderRadius:9,background:'var(--signal)',height:`${10+Math.abs(Math.sin(i*.6))*26}px`,animation:`tributo-breathe ${.5+i%5*.1}s ease-in-out infinite`}}/>)}<span style={{marginLeft:'auto',fontSize:14,color:'var(--signal-700)',fontWeight:600,paddingRight:8}}>Listening…</span></div>
+                : <input id="q" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&onSend()} placeholder="Ask about your tax, plain English is fine" style={{flex:1,border:0,outline:'none',background:'transparent',fontSize:17,fontFamily:'var(--font-body)',padding:'12px 0',color:'var(--ink)'}} disabled={busy}/>}
+              <Btn variant="primary" onClick={onSend} disabled={busy||(!input.trim()&&!listening)} iconRight={<Icon name="arrow-up" size={20} color="#fff" stroke={2.2}/>} style={{minWidth:52,padding:'12px 16px'}}>{''}</Btn>
+            </div>
+            <button onClick={()=>setSpeakOn(s=>!s)} title="Speak answers aloud" style={{flex:'0 0 auto',display:'inline-flex',alignItems:'center',gap:8,background:speakOn?'var(--signal-50)':'var(--white)',border:`1px solid ${speakOn?'var(--signal)':'var(--line-2)'}`,borderRadius:999,padding:'12px 16px',fontSize:14,fontWeight:600,cursor:'pointer',color:'var(--ink-2)'}}><Icon name={speakOn?'volume-2':'volume-x'} size={18} color="var(--signal-700)"/>Speak</button>
+          </div>
+          <p style={{textAlign:'center',fontSize:13,color:'var(--ink-3)',margin:'12px 0 0'}}>Your questions help improve this service privately. Your personal details are removed on this device before anything is sent.</p>
+        </div>
+      </footer>
+
+      {drawerOpen&&(
+        <>
+          <div onClick={()=>setDrawerOpen(false)} style={{position:'fixed',inset:0,background:'var(--scrim)',zIndex:40}}/>
+          <aside className="scrolly" style={{position:'fixed',top:0,right:0,bottom:0,width:400,background:'var(--paper)',borderLeft:'1px solid var(--line)',boxShadow:'var(--shadow-pop)',zIndex:41,padding:'22px',overflowY:'auto'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}}><h2 style={{fontFamily:'var(--font-heading)',fontSize:20,fontWeight:700,margin:0}}>Transcript</h2><button onClick={()=>setDrawerOpen(false)} style={{background:'var(--white)',border:'1px solid var(--line-2)',borderRadius:999,width:36,height:36,cursor:'pointer',display:'grid',placeItems:'center'}}><Icon name="x" size={18}/></button></div>
+            {transcript.length===0&&<p style={{color:'var(--ink-3)',fontSize:15}}>Your conversation will appear here, always available alongside voice.</p>}
+            <div style={{display:'flex',flexDirection:'column',gap:14}}>
+              {transcript.map((m,i)=>(
+                <div key={i} style={{display:'flex',gap:10,flexDirection:m.role==='you'?'row-reverse':'row'}}>
+                  <div style={{flex:'0 0 auto',width:30,height:30,borderRadius:99,background:m.role==='you'?'var(--paper-3)':'var(--signal-100)',display:'grid',placeItems:'center',fontFamily:'var(--font-heading)',fontWeight:700,fontSize:12,color:m.role==='you'?'var(--ink)':'var(--signal-700)'}}>{m.role==='you'?'You':'T'}</div>
+                  <div style={{background:m.role==='you'?'var(--blue-600)':'var(--white)',color:m.role==='you'?'#fff':'var(--ink)',border:m.role==='you'?'none':'1px solid var(--line)',borderRadius:14,padding:'10px 14px',fontSize:15,lineHeight:1.45,maxWidth:260}}>{m.text}</div>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ---------- right-hand tabbed side panel (Document + Privacy only) ---------- */
+function SidePanel({tab,setTab,doc,redactions,redactedText,payload,reveal}){
+  const tabs=[{k:'document',label:'Document',icon:'file-text'},{k:'privacy',label:'Privacy',icon:'shield-check'}];
+  return (
+    <aside style={{width:440,flex:'0 0 440px',borderLeft:'1px solid var(--line)',background:'var(--white)',display:'flex',flexDirection:'column',minHeight:0}}>
+      <div role="tablist" style={{display:'flex',padding:'0 8px',borderBottom:'1px solid var(--line)',gap:2}}>
+        {tabs.map(t=>{const on=tab===t.k;return(
+          <button key={t.k} role="tab" aria-selected={on} onClick={()=>setTab(t.k)} style={{flex:1,display:'inline-flex',flexDirection:'column',alignItems:'center',gap:4,padding:'12px 4px 10px',background:'transparent',border:'none',borderBottom:`3px solid ${on?'var(--blue-600)':'transparent'}`,cursor:'pointer',color:on?'var(--ink)':'var(--ink-3)',fontWeight:on?700:500,fontSize:12.5,fontFamily:'var(--font-body)'}}>
+            <Icon name={t.icon} size={19} color={on?'var(--blue-600)':'var(--ink-3)'}/>{t.label}
+          </button>);})}
+      </div>
+      <div className="scrolly" style={{flex:1,overflowY:'auto',padding:'22px'}}>
+        {tab==='document'&&<DocumentTab doc={doc}/>}
+        {tab==='privacy'&&<PrivacyTab redactions={redactions} redactedText={redactedText} payload={payload} revealed={reveal.redactions}/>}
+      </div>
+    </aside>
+  );
+}
+function DocumentTab({doc}){
+  if(!doc) return <Empty icon="file-text" title="The cited source opens here" body="When the advisor finishes, the exact GOV.UK or HMRC page it used appears here with the relevant passage highlighted."/>;
+  return <div style={{animation:'tributo-rise var(--dur-4) var(--ease-out) both'}}>
+    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}><Badge tone="info" dot>Source · cited</Badge></div>
+    <div style={{border:'1px solid var(--line)',borderRadius:'var(--radius-md)',overflow:'hidden'}}>
+      <div style={{background:'#0b0c0c',color:'#fff',padding:'10px 14px',fontSize:13,display:'flex',alignItems:'center',gap:8}}><span style={{width:9,height:9,background:'#1d70b8',borderRadius:2}}/>{doc.publisher||'GOV.UK'}</div>
+      <div style={{padding:'18px 18px 22px'}}>
+        <h3 style={{fontFamily:'var(--font-heading)',fontSize:23,fontWeight:800,margin:'0 0 4px',lineHeight:1.2}}>{doc.title}</h3>
+        <div style={{fontSize:12.5,color:'var(--ink-3)',fontFamily:'var(--font-mono)',marginBottom:16}}>{doc.publisher} · {doc.updated}</div>
+        <p style={{fontSize:15.5,lineHeight:1.6,margin:0,color:'var(--ink-2)'}}>{highlightNodes(doc.body,doc.q)}</p>
+      </div>
+    </div>
+    {doc.url&&<a href={doc.url} target="_blank" rel="noreferrer" style={{display:'inline-flex',alignItems:'center',gap:7,marginTop:16,fontSize:14,fontWeight:600,color:'var(--blue-600)'}}><Icon name="external-link" size={16} color="var(--blue-600)"/>{doc.url}</a>}
+  </div>;
+}
+function PrivacyTab({redactions,redactedText,payload,revealed}){
+  return <div>
+    <h3 style={{fontFamily:'var(--font-heading)',fontSize:19,fontWeight:700,margin:'0 0 6px'}}>What leaves this device</h3>
+    <p style={{fontSize:14.5,color:'var(--ink-2)',lineHeight:1.5,margin:'0 0 18px'}}>Your personal details are removed <strong>on this device</strong> before your question is sent. Here's exactly what was scrubbed and what went out.</p>
+    {!revealed ? <Empty icon="shield-check" title="Nothing sent yet" body="Ask a question and the redaction ledger fills in here."/> : <>
+      <div style={{fontSize:12,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--ink-3)',marginBottom:10}}>Removed before sending</div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:22}}>{redactions.length?redactions.map((r,i)=><RedactionChip key={i} {...r}/>):<span style={{fontSize:14,color:'var(--ink-3)'}}>No personal identifiers were detected in this question.</span>}</div>
+      {redactedText&&<><div style={{fontSize:12,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--ink-3)',marginBottom:10}}>Redacted question</div>
+      <p style={{fontSize:15,lineHeight:1.5,background:'var(--paper-2)',borderRadius:'var(--radius-md)',padding:'12px 14px',margin:'0 0 20px'}}>{redactedText}</p></>}
+      <div style={{fontSize:12,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--ink-3)',marginBottom:10}}>Exact payload sent for inference</div>
+      <pre style={{background:'var(--blue-900)',color:'#cfe0f5',borderRadius:'var(--radius-md)',padding:'16px',fontSize:12.5,fontFamily:'var(--font-mono)',lineHeight:1.6,overflowX:'auto',margin:0,maxHeight:280}}>{payload||'—'}</pre>
+    </>}
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+<script>
+  (function(){
+    function boot(){
+      var src=document.getElementById('appsrc').textContent;
+      var out=Babel.transform(src,{presets:[[Babel.availablePresets.react,{runtime:'classic'}]]}).code;
+      (0,eval)(out);
+    }
+    if(document.readyState!=='loading') boot();
+    else document.addEventListener('DOMContentLoaded',boot);
+  })();
+</script>
+</body></html>

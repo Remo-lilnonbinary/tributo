@@ -1,0 +1,77 @@
+/* ============================================================
+   TRIBUTO, COLOR TOKENS
+   Anchor: confident institutional blue (trust, structure, focus).
+   Surfaces: warm off-white "paper" + warm neutral greys.
+   Text: deep ink.
+   Accent ("signal"): ONE warm living green, reserved for
+   live / active / action states only (CTA, advisor glow, mic
+   listening, answer streaming). Never used for plain decoration.
+   All foreground/background pairings target WCAG AA minimum,
+   AAA for body text.
+   ============================================================ */
+:root {
+  /* ---- Anchor blue ---------------------------------------- */
+  --blue-50:  #EAF1FB;
+  --blue-100: #CFE0F5;
+  --blue-200: #A6C5EC;
+  --blue-300: #6F9FE0;
+  --blue-400: #3D79D1;
+  --blue-500: #1F5EC4;  /* primary brand blue */
+  --blue-600: #1A4DA2;  /* on-paper text/links, hover */
+  --blue-700: #163F84;
+  --blue-800: #112F61;
+  --blue-900: #0D2143;  /* deep institutional navy */
+
+  /* ---- Ink (text) ----------------------------------------- */
+  --ink:    #16191F;    /* primary text, AAA on paper */
+  --ink-2:  #3B434F;    /* secondary text */
+  --ink-3:  #5E6775;    /* tertiary / muted */
+  --ink-4:  #8A9099;    /* faint / disabled */
+
+  /* ---- Paper & warm neutrals ------------------------------ */
+  --white:   #FFFFFF;
+  --paper:   #FBFAF6;   /* app background */
+  --paper-2: #F4F1EA;   /* sunken wells, secondary surface */
+  --paper-3: #ECE7DD;   /* deeper warm surface */
+  --line:        #E5DFD3;  /* hairline borders */
+  --line-2:      #D4CCBC;  /* stronger borders */
+  --line-strong: #B7AE9C;  /* input borders, dividers w/ emphasis */
+
+  /* ---- Signal (live / active / action accent) ------------- */
+  --signal:      #0C8B57;  /* CTA fill, active, white text AA-large */
+  --signal-600:  #0A7449;  /* hover/press */
+  --signal-700:  #075C3A;  /* text on light, AAA */
+  --signal-glow: #22C281;  /* living glow, mic listening, pulses */
+  --signal-100:  #D8F1E5;  /* soft tint backgrounds */
+  --signal-50:   #EBF8F1;
+
+  /* ---- Console "cool" tints (operator surface) ------------ */
+  --slate-50:  #F5F6F8;
+  --slate-100: #EBEDF1;
+  --slate-200: #DBDFE6;
+  --slate-700: #2C333D;
+  --slate-900: #11151B;
+
+  /* ---- Semantic ------------------------------------------- */
+  --confidence-grounded:     #0C8B57;  /* grounded / confident */
+  --confidence-grounded-bg:  #DEF1E8;
+  --confidence-escalated:    #9A5B12;  /* handed to a human */
+  --confidence-escalated-bg: #F6EAD4;
+
+  --redaction:    #5B53A6;  /* PII masked, distinct privacy hue */
+  --redaction-bg: #ECEAF6;
+
+  --federated-before: #8A8270;  /* warm grey, prior state */
+  --federated-after:  #0C8B57;  /* signal green, improved */
+
+  --info:    #1F5EC4;
+  --info-bg: #E6EEFB;
+  --warn:    #9A5B12;
+  --warn-bg: #F6EAD4;
+  --alert:   #B5362A;  /* errors */
+  --alert-bg:#F7E1DD;
+
+  /* ---- Focus (accessibility, GOV.UK-style) ---------------- */
+  --focus-yellow: #FBD800;
+  --focus-ink:    #16191F;
+}

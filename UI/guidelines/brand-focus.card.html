@@ -1,0 +1,12 @@
+<!-- @dsCard group="Brand" viewport="700x160" name="Accessibility, focus & reduced motion" subtitle="Focus is a feature: 3px yellow block + ink" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);padding:24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .btn{font-family:var(--font-heading);font-weight:600;font-size:16px;padding:12px 22px;border-radius:var(--radius-pill);border:0;cursor:pointer}
+  .focus{outline:var(--focus-w) solid var(--focus-yellow);outline-offset:0;box-shadow:0 3px 0 0 var(--focus-ink)}
+  .note{font-size:13px;color:var(--ink-3);max-width:230px}
+</style></head><body>
+  <button class="btn focus" style="background:var(--signal);color:#fff">Ask the advisor</button>
+  <button class="btn focus" style="background:var(--white);color:var(--ink);box-shadow:var(--ring-line-2),0 3px 0 0 var(--focus-ink);outline:var(--focus-w) solid var(--focus-yellow)">See sources</button>
+  <span class="note">Keyboard focus shows a 3px focus-yellow block + ink underline on every control. Motion collapses under <code style="font-family:var(--font-mono);font-size:12px">prefers-reduced-motion</code>.</span>
+</body></html>

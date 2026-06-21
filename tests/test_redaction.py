@@ -35,3 +35,15 @@ def test_placeholders_are_numbered_per_type():
     result = redact("Email a@b.com and c@d.com please", backend="regex")
     assert "[EMAIL_1]" in result.redacted_text
     assert "[EMAIL_2]" in result.redacted_text
+
+
+def test_redacts_word_form_amounts():
+    # "pounds"/"gbp" with no £ symbol (how voice + plain typing usually phrase it) must redact.
+    for raw, figure in [
+        ("I made about 10,000 pounds last year", "10,000"),
+        ("I earned 10000 gbp from freelancing", "10000"),
+        ("my side income was £10k", "10k"),
+    ]:
+        result = redact(raw, backend="regex")
+        assert any(f.type == "money amount" for f in result.findings), raw
+        assert figure not in result.redacted_text, raw

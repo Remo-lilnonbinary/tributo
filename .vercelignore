@@ -1,0 +1,19 @@
+# Vercel deploys ONLY the static UI/ folder (see vercel.json -> outputDirectory).
+# Exclude the Python backend and everything else so Vercel treats this as a pure
+# static site and never tries to build a Python project.
+.venv/
+app/
+tests/
+scripts/
+pyproject.toml
+uv.lock
+*.pyc
+__pycache__/
+.ruff_cache/
+.pytest_cache/
+.gstack/
+.conductor/
+web/
+updated UI.zip
+.env
+.env.example

@@ -282,7 +282,11 @@ def settings_view() -> dict:
     }
 
 
-# Mock UI last, so it never shadows the API routes above.
+# Front-end last, so it never shadows the API routes above. The production UI lives in /UI
+# (Tributo design system + the citizen app and institution console, wired to the API above).
+# Falls back to the legacy /web mock if /UI is absent.
+_UI_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "UI")
 _WEB_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "web")
-if os.path.isdir(_WEB_DIR):
-    app.mount("/", StaticFiles(directory=_WEB_DIR, html=True), name="web")
+_FRONTEND_DIR = _UI_DIR if os.path.isdir(_UI_DIR) else _WEB_DIR
+if os.path.isdir(_FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=_FRONTEND_DIR, html=True), name="web")

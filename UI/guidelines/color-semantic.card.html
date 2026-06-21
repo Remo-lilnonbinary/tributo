@@ -1,0 +1,23 @@
+<!-- @dsCard group="Colors" viewport="700x180" name="Semantic tokens" subtitle="Confidence, redaction, federated before/after" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>
+  body{margin:0;background:var(--paper);font-family:var(--font-body);color:var(--ink)}
+  .wrap{padding:20px;display:flex;flex-wrap:wrap;gap:10px}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600}
+  .dot{width:10px;height:10px;border-radius:999px}
+  .fed{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--ink-2)}
+  .bar{height:10px;border-radius:3px}
+</style></head><body>
+  <div class="wrap">
+    <span class="chip" style="background:var(--confidence-grounded-bg);color:var(--confidence-grounded)"><span class="dot" style="background:var(--confidence-grounded)"></span>Grounded · confident</span>
+    <span class="chip" style="background:var(--confidence-escalated-bg);color:var(--confidence-escalated)"><span class="dot" style="background:var(--confidence-escalated)"></span>Escalated to human</span>
+    <span class="chip" style="background:var(--redaction-bg);color:var(--redaction)"><span class="dot" style="background:var(--redaction)"></span>Redacted · PII</span>
+    <span class="chip" style="background:var(--alert-bg);color:var(--alert)"><span class="dot" style="background:var(--alert)"></span>Error</span>
+    <div style="width:100%;height:1px;background:var(--line);margin:4px 0"></div>
+    <div class="fed"><span>Federated</span>
+      <span class="bar" style="width:120px;background:var(--federated-before)"></span><span style="color:var(--federated-before)">before</span>
+      <span style="margin:0 4px">→</span>
+      <span class="bar" style="width:170px;background:var(--federated-after)"></span><span style="color:var(--federated-after)">after</span>
+    </div>
+  </div>
+</body></html>

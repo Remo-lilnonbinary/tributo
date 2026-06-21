@@ -1,0 +1,81 @@
+/* ============================================================
+   TRIBUTO, MOTION TOKENS
+   Motion is meaningful: it choreographs to real backend events,
+   never decorative. Calm spring micro-motion; nothing bouncy or
+   fast. Everything degrades to no-motion under reduced-motion.
+   ============================================================ */
+:root {
+  /* Durations */
+  --dur-1: 120ms;   /* taps, toggles */
+  --dur-2: 200ms;   /* hovers, chips appearing */
+  --dur-3: 320ms;   /* panels, reasoning steps */
+  --dur-4: 520ms;   /* character state transitions */
+  --dur-slow: 900ms;/* ambient idle breathing */
+
+  /* Easing */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);     /* calm settle */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);   /* gentle spring */
+  --ease-linear: linear;                            /* token streaming */
+}
+
+/* Ambient keyframes shared across the system */
+@keyframes tributo-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-2px) scale(1.012); }
+}
+@keyframes tributo-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 194, 129, 0.30); }
+  50%      { box-shadow: 0 0 0 12px rgba(34, 194, 129, 0); }
+}
+@keyframes tributo-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96%           { transform: scaleY(0.1); }
+}
+@keyframes tributo-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes tributo-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+@keyframes tributo-caret {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+@keyframes tributo-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+/* Character keyframes (SVG advisor) */
+@keyframes tributo-eyelid {
+  0%, 93%, 100% { transform: scaleY(0); }
+  96%           { transform: scaleY(1); }
+}
+@keyframes tributo-scan {
+  0%, 100% { transform: translateX(-2.4px); }
+  50%      { transform: translateX(2.4px); }
+}
+@keyframes tributo-thinkdot {
+  0%, 100% { opacity: 0.18; transform: translateY(0); }
+  50%      { opacity: 1;    transform: translateY(-2px); }
+}
+@keyframes tributo-sway {
+  0%, 100% { transform: rotate(-1.2deg); }
+  50%      { transform: rotate(1.2deg); }
+}
+@keyframes tributo-shield-sweep {
+  0%   { transform: translateX(0);     opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translateX(118px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
