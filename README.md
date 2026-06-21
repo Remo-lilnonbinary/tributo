@@ -1,4 +1,4 @@
-# Tributo (Winner Flock.AI Track Hackathon)
+# Tributo (Winner Flock.io Track Hackathon)
 
 **Sovereign, privacy-preserving, auditable UK tax guidance, built on FLock's decentralised AI.**
 
