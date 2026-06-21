@@ -210,12 +210,13 @@ function App(){
   const run=useCallback(async (question)=>{
     if(!question||!question.trim()||asking.current) return;
     asking.current=true; lastQ.current=question;
+    // No backend connected (e.g. static preview): show the "connect a model" gate and record
+    // NOTHING — no transcript, no answer. With no LLM the app genuinely does not work.
+    if(connectedRef.current===false){ setPhase('offline'); asking.current=false; return; }
     setTranscript(t=>[...t,{role:'you',text:question}]);
     setSteps([]); setStreamed(''); setCitations([]); setFacts([]); setRedactions([]); setRedactedText('');
     setPayload(''); setConfidence(null); setEscalate(false); setDoc(null);
     setReveal({redactions:false,steps:false,meta:false,actions:false});
-    // No backend connected (e.g. static Vercel preview): show the "connect a model" gate.
-    if(connectedRef.current===false){ setPhase('offline'); asking.current=false; return; }
     setPhase('redaction'); setTab('privacy');
     let answer=''; let firstSrc=null; let idx=0; let cur=[]; let esc=false;
     try{
@@ -272,7 +273,7 @@ function App(){
         <div style={{display:'flex',alignItems:'center',gap:14}}>
           {connected&&health&&<span style={{display:'inline-flex',alignItems:'center',gap:7,fontSize:13,color:'var(--ink-3)'}}><span style={{width:8,height:8,borderRadius:99,background:health.flock_configured?'var(--signal)':'var(--ink-4)'}}/>{health.flock_configured?'FLock live':'Local fallback'} · {health.model}</span>}
           {connected===false&&<span style={{display:'inline-flex',alignItems:'center',gap:7,fontSize:13,fontWeight:600,color:'var(--confidence-escalated)',background:'var(--confidence-escalated-bg)',padding:'5px 11px',borderRadius:999}}><span style={{width:8,height:8,borderRadius:99,background:'var(--confidence-escalated)'}}/>LLM API not connected</span>}
-          <button onClick={()=>setDrawerOpen(o=>!o)} style={{display:'inline-flex',alignItems:'center',gap:8,background:'var(--white)',border:'1px solid var(--line-2)',borderRadius:999,padding:'8px 14px',fontSize:14,fontWeight:600,cursor:'pointer'}}><Icon name="messages-square" size={17}/>Transcript {transcript.length>0&&<span style={{fontFamily:'var(--font-mono)',color:'var(--ink-3)'}}>{transcript.length}</span>}</button>
+          {connected!==false&&<button onClick={()=>setDrawerOpen(o=>!o)} style={{display:'inline-flex',alignItems:'center',gap:8,background:'var(--white)',border:'1px solid var(--line-2)',borderRadius:999,padding:'8px 14px',fontSize:14,fontWeight:600,cursor:'pointer'}}><Icon name="messages-square" size={17}/>Transcript {transcript.length>0&&<span style={{fontFamily:'var(--font-mono)',color:'var(--ink-3)'}}>{transcript.length}</span>}</button>}
           <a href="/gov.html" style={{display:'inline-flex',alignItems:'center',gap:7,fontSize:14,color:'var(--blue-600)',textDecoration:'none',fontWeight:600}}><Icon name="building-2" size={16} color="var(--blue-600)"/>Institution console</a>
         </div>
       </header>
