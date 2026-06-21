@@ -10,7 +10,8 @@ from __future__ import annotations
 import json
 import os
 
-from fastapi import FastAPI, HTTPException
+import httpx
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
@@ -27,7 +28,7 @@ from .guardrails import evaluate
 from .plans import plan_store
 from .redaction import redact
 from .retrieval import get_retriever
-from .schemas import AskRequest, PlanToggleRequest, VoiceTokenRequest
+from .schemas import AskRequest, PlanToggleRequest, VoiceSpeakRequest, VoiceTokenRequest
 from .voice.token import VoiceUnavailable, create_token
 
 app = FastAPI(title="Tributo", version="0.1.0")
@@ -84,6 +85,7 @@ def health() -> dict:
         "redactor": s.redactor,
         "retriever": get_retriever().backend,
         "voice_configured": s.voice_configured,
+        "eleven_configured": s.eleven_configured,
         "corpus_size": len(all_sources()),
         "audit_entries": audit_log.count(),
     }
@@ -212,6 +214,37 @@ def voice_token(req: VoiceTokenRequest) -> dict:
         raise HTTPException(503, str(exc))
 
 
+@app.post("/api/voice/speak")
+async def voice_speak(req: VoiceSpeakRequest) -> Response:
+    """Synthesize advisor speech with ElevenLabs without exposing the API key to the browser."""
+    s = get_settings()
+    if not s.eleven_configured:
+        raise HTTPException(503, "ElevenLabs is not configured. Set ELEVEN_API_KEY and VOICE_ID.")
+
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{s.voice_id}"
+    payload = {
+        "text": req.text,
+        "model_id": s.eleven_model,
+        "voice_settings": {"stability": 0.45, "similarity_boost": 0.8},
+    }
+    headers = {
+        "accept": "audio/mpeg",
+        "content-type": "application/json",
+        "xi-api-key": s.eleven_api_key or "",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+            resp.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        detail = exc.response.text[:240]
+        raise HTTPException(exc.response.status_code, f"ElevenLabs TTS failed: {detail}") from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, "ElevenLabs TTS request failed.") from exc
+
+    return Response(content=resp.content, media_type="audio/mpeg")
+
+
 # --- citizen action plan ---
 @app.get("/api/plan")
 def get_plan(citizen: str = "citizen") -> dict:
@@ -244,6 +277,7 @@ def settings_view() -> dict:
         "retriever": get_retriever().backend,
         "retrieval_top_k": s.retrieval_top_k,
         "voice_configured": s.voice_configured,
+        "eleven_configured": s.eleven_configured,
         "corpus_size": len(all_sources()),
     }
 

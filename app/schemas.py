@@ -18,3 +18,7 @@ class PlanToggleRequest(BaseModel):
 class VoiceTokenRequest(BaseModel):
     room: str = Field(default="tributo")
     identity: str | None = None
+
+
+class VoiceSpeakRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=5000)

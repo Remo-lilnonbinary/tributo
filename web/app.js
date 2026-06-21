@@ -2,6 +2,8 @@
 // $, pct, escapeHtml and runFederated live in shared.js (loaded first).
 const state = { sources: [], lastQuestion: "", asking: false };
 const CITIZEN = "maya"; // demo citizen; the action plan persists for them across questions
+const browserTtsAvailable = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+let preferredBrowserVoice = null;
 
 const EXAMPLES = [
   { label: "Redaction demo", text: "My name is Priya Shah, my NI number is QQ 12 34 56 A and I earned £34,500 from Deliveroo. When do I file Self Assessment?" },
@@ -13,11 +15,12 @@ const EXAMPLES = [
 async function boot() {
   renderExamples();
   wire();
+  configureBrowserVoice();
+  setBrowserVoicePill();
   try {
     const h = await (await fetch("/api/health")).json();
     setPill("pill-flock", h.flock_configured ? "FLock live" : "FLock fallback", h.flock_configured ? "good" : "warn");
     setPill("pill-model", h.model, "");
-    setPill("pill-voice", h.voice_configured ? "voice ready" : "voice off", h.voice_configured ? "good" : "warn");
   } catch {
     setPill("pill-flock", "backend offline", "warn");
   }
@@ -31,6 +34,52 @@ async function loadPlan() {
   } catch { /* no plan yet */ }
 }
 function setPill(id, text, tone) { const el = $(id); el.textContent = text; el.className = "pill" + (tone ? " " + tone : ""); }
+
+function setBrowserVoicePill() {
+  const label = preferredBrowserVoice ? `browser voice: ${preferredBrowserVoice.name}` : "browser voice";
+  setPill("pill-voice", browserTtsAvailable ? label : "voice off", browserTtsAvailable ? "good" : "warn");
+}
+
+function configureBrowserVoice() {
+  if (!browserTtsAvailable) return;
+
+  const loadVoice = () => {
+    preferredBrowserVoice = pickBrowserVoice(window.speechSynthesis.getVoices());
+    setBrowserVoicePill();
+  };
+
+  loadVoice();
+  window.speechSynthesis.onvoiceschanged = loadVoice;
+}
+
+function pickBrowserVoice(voices) {
+  if (!voices.length) return null;
+
+  const naturalNames = [
+    "google uk english female",
+    "microsoft sonia",
+    "microsoft libby",
+    "serena",
+    "kate",
+    "samantha",
+    "daniel",
+    "ava",
+  ];
+
+  return voices
+    .filter((voice) => voice.lang && voice.lang.toLowerCase().startsWith("en"))
+    .map((voice) => {
+      const name = voice.name.toLowerCase();
+      let score = voice.lang.toLowerCase() === "en-gb" ? 40 : 10;
+      if (name.includes("premium") || name.includes("enhanced") || name.includes("natural")) score += 30;
+      if (name.includes("google") || name.includes("microsoft")) score += 20;
+      const preferredIndex = naturalNames.findIndex((naturalName) => name.includes(naturalName));
+      if (preferredIndex >= 0) score += 50 - preferredIndex;
+      if (voice.default) score -= 10;
+      return { voice, score };
+    })
+    .sort((a, b) => b.score - a.score)[0]?.voice || null;
+}
 
 function renderExamples() {
   $("examples").innerHTML = "";
@@ -110,8 +159,8 @@ async function readSSE(stream, handlers) {
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const events = buf.split("\n\n");
+    buf += dec.decode(value, { stream: true }).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    const events = buf.split(/\n\n+/);
     buf = events.pop() || "";
     for (const raw of events) {
       const ev = raw.match(/^event:\s*(.+)$/m)?.[1];
@@ -266,8 +315,9 @@ async function exportAudit() {
   URL.revokeObjectURL(url);
 }
 
-// ---------- voice (browser engine; production = LiveKit + ElevenLabs) ----------
+// ---------- voice input + browser speech output ----------
 let recognition = null;
+let currentUtterance = null;
 function toggleMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { alert("This browser has no Speech Recognition. Type your question instead."); return; }
@@ -282,17 +332,27 @@ function toggleMic() {
 }
 
 function speak(text) {
-  if (!window.speechSynthesis) { $("orb").classList.remove("speaking"); return; }
+  if (!browserTtsAvailable || !text.trim()) {
+    $("orb").classList.remove("speaking");
+    return;
+  }
+
   window.speechSynthesis.cancel();
-  const sentences = text.match(/[^.!?\n]+[.!?]?/g) || [text];
-  let i = 0;
-  const next = () => {
-    if (i >= sentences.length) { $("orb").classList.remove("speaking"); return; }
-    const u = new SpeechSynthesisUtterance(sentences[i++].trim());
-    u.lang = "en-GB"; u.onend = next; u.onerror = next;
-    window.speechSynthesis.speak(u);
+  const utterance = new SpeechSynthesisUtterance(text);
+  currentUtterance = utterance;
+  utterance.lang = "en-GB";
+  utterance.voice = preferredBrowserVoice || pickBrowserVoice(window.speechSynthesis.getVoices());
+  utterance.rate = 0.95;
+  utterance.pitch = 1.03;
+  utterance.onend = () => {
+    if (currentUtterance === utterance) currentUtterance = null;
+    $("orb").classList.remove("speaking");
   };
-  next();
+  utterance.onerror = () => {
+    if (currentUtterance === utterance) currentUtterance = null;
+    $("orb").classList.remove("speaking");
+  };
+  window.speechSynthesis.speak(utterance);
 }
 
 boot();

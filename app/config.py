@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     livekit_url: str | None = None
     livekit_api_key: str | None = None
     livekit_api_secret: str | None = None
+    eleven_api_key: str | None = None
+    eleven_model: str = "eleven_turbo_v2_5"
     voice_id: str = "ODq5zmih8GrVes37Dizd"
 
     @property
@@ -45,6 +47,10 @@ class Settings(BaseSettings):
     @property
     def voice_configured(self) -> bool:
         return bool(self.livekit_url and self.livekit_api_key and self.livekit_api_secret)
+
+    @property
+    def eleven_configured(self) -> bool:
+        return bool(self.eleven_api_key and self.voice_id)
 
 
 @lru_cache
