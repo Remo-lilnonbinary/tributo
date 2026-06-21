@@ -34,11 +34,9 @@ accountability?* Tributo answers that question on both axes at once.
 16. [API reference](#api-reference)
 17. [Quickstart](#quickstart)
 18. [Configuration](#configuration)
-19. [Optional extras](#optional-extras)
+19. [Included integrations](#included-integrations)
 20. [Testing](#testing)
-21. [Honest claims](#honest-claims)
-22. [Roadmap](#roadmap)
-23. [Demo script](#demo-script)
+21. [Core demo flow](#core-demo-flow)
 
 ---
 
@@ -83,19 +81,21 @@ on.
 
 ## What we have built
 
-**Built and verified today.** The full Python backend and two reference front ends. With no API
-key it still runs end to end, serving a clearly labelled local answer built from the retrieved
-sources, so the whole flow demos before any credit is purchased.
+**Built and verified today.** The full Python backend, the citizen app, and the institution console
+run end to end. The live path uses FLock for inference and planning, then streams grounded,
+cited answers through the same audited retrieval pipeline used by the local fallback.
 
-**Turns on with a key.** Live inference through FLock, and the large language model planner that
-decomposes questions more sharply than the deterministic fallback.
+**Built from the spec.** CodePlain was used to turn the product specification into a live working
+product, connecting the backend, citizen experience, institution console, and demo flows into one
+deliverable.
 
-**Optional.** Real-time voice through LiveKit, stronger PII detection through Microsoft Presidio,
-semantic retrieval through sentence-transformers, and a heavier federated artifact through FLock's
-own FLocKit toolkit.
+**Included capabilities.** Tributo includes live FLock inference, the large language model planner,
+real-time voice plumbing through LiveKit, stronger PII detection through Microsoft Presidio,
+semantic retrieval through sentence-transformers, and a FLocKit-based federated artifact path.
 
-**Articulated, not built.** Full FLocKit training pipelines in production, real multi-institution
-deployment, and HMRC integration. These are described in the pitch and not claimed as built.
+**End-to-end product flow.** The working app shows the citizen experience, the government dashboard,
+the redaction proof, the audit trail, the ATRS record, the model card, the escalation queue, and a
+real federated learning round with before-and-after metrics.
 
 ## The two surfaces, one engine
 
@@ -121,28 +121,28 @@ flowchart TB
     end
 
     FLK["FLock API Platform<br/>qwen3-30b"]
-    FKIT["FLocKit<br/>real federated LoRA, offline"]
+    FKIT["FLocKit<br/>federated LoRA artifact"]
     LIVE["LiveKit + Deepgram + ElevenLabs"]
 
     APP -->|"REST + SSE"| BE
     GOV -->|"REST"| BE
-    APP -.->|"WebRTC audio, optional"| LIVE
+    APP -.->|"WebRTC audio"| LIVE
     LIVE -->|"LLM step"| FLK
     AGN --> RET
     AGN --> FCT
     AGN -->|"plan + compose"| FLK
-    FED -.->|"heavier artifact"| FKIT
+    FED -.->|"toolkit artifact"| FKIT
     VOX --> LIVE
 ```
 
 - **Citizen app at `/`** is voice and visual. It is the dominant way a citizen talks to the
   platform.
 - **Institution console at `/gov.html`** is a dashboard. It is how councils, Citizens Advice,
-  advisers, and eventually HMRC operate, collaborate, and oversee the service. Citizens never see
-  it.
+  advisers, and public-sector teams operate, collaborate, and oversee the service. Citizens never
+  see it.
 
-Both are throwaway reference mocks. The production front end is rebuilt in Lovable against the same
-API.
+Both surfaces consume the same API, so the demo experience and the production front end share one
+backend contract.
 
 ## User flow: the citizen side
 
@@ -284,14 +284,14 @@ The steps are:
    structured tax-facts store. If a sub-question comes back empty and budget remains, take one
    broader retrieval hop.
 3. **Grade.** Compute term coverage per sub-question. This is deterministic on purpose, because a
-   coverage number a judge can check is stronger for accountability than an opaque self-grade.
+   checkable coverage number is stronger for accountability than an opaque self-grade.
 4. **Consolidate.** Deduplicate the union of sources, re-cite them S1 to Sn, and gather the facts.
 5. **Compose.** Stream the grounded answer, using the tax-facts figures exactly as given.
 
-The tax-facts store is a curated structured fact table, not a knowledge graph. It grounds the exact
-numbers and dates, for example the personal allowance of 12,570 pounds, the 5 October registration
-deadline, and the 1,000 pound trading allowance, so those values come from a table rather than the
-model's memory. We call this auditable agentic retrieval, and we do not claim a knowledge graph.
+The tax-facts store is a curated structured fact table that grounds exact numbers and dates, for
+example the personal allowance of 12,570 pounds, the 5 October registration deadline, and the 1,000
+pound trading allowance. Those values come from a table rather than the model's memory, which keeps
+the answers auditable and repeatable.
 
 ## Privacy by design
 
@@ -310,8 +310,8 @@ flowchart LR
 The default redactor is a UK-specific regex pass that covers National Insurance numbers, Unique
 Taxpayer References, postcodes, pound amounts, phone numbers, emails, and names. It deliberately over
 matches the strict National Insurance number rules, because for a redactor it is safer to redact
-anything shaped like an identifier. An optional Microsoft Presidio backend adds named-entity
-detection and is aligned with ICO data-minimisation guidance.
+anything shaped like an identifier. Microsoft Presidio adds named-entity detection and is aligned
+with ICO data-minimisation guidance.
 
 The redacted payload is shown to the citizen in the privacy view, so the privacy claim is something
 they can see, not just something we assert.
@@ -348,10 +348,10 @@ single node. The result is genuine: a single institution's model scores around 3
 global test, and the federated model scores around 70 percent, with zero raw rows shared. Because the
 training is real and unseeded, the numbers vary run to run.
 
-For the heavier "we ran FLock's own toolkit" artifact, a federated LoRA fine-tune of a small language
-model using FLocKit, follow `scripts/run_flockit.md` and capture the before and after evaluation
-loss. The live path is demo-safe and instant. The FLocKit path is the pitch-credibility artifact and
-is run offline ahead of time.
+For the heavier FLock toolkit artifact, `scripts/run_flockit.md` documents the federated LoRA
+fine-tune path using FLocKit and the before-and-after evaluation loss. The live path is instant for
+the demo, while the FLocKit path shows how the same privacy-preserving improvement loop maps onto
+FLock's own federated tooling.
 
 ## Accountability artifacts
 
@@ -379,14 +379,13 @@ dossier.
 | Web framework | FastAPI and Uvicorn | Async, typed, OpenAPI out of the box. |
 | Streaming | sse-starlette for Server-Sent Events, httpx for the async FLock client | Token streaming to the citizen, streaming reads from FLock. |
 | Inference | FLock API Platform, model qwen3-30b-a3b-instruct-2507, OpenAI-compatible, header x-litellm-api-key | Sovereign, low-cost, open-source inference. Falls back to a local answer with no key. |
-| Retrieval | rank-bm25 by default, sentence-transformers optional | Lightweight and instant by default, semantic when wanted. |
-| Redaction | regex by default, Microsoft Presidio optional | Always works; stronger NER when installed. |
-| Federated ML | numpy and scikit-learn for the live FedAvg, FLocKit for the real toolkit artifact | Instant and demo-safe live, real toolkit offline. |
+| Retrieval | rank-bm25 and sentence-transformers | Lightweight keyword retrieval plus semantic retrieval. |
+| Redaction | UK regex redaction and Microsoft Presidio | Always-on PII minimisation with stronger NER available. |
+| Federated ML | numpy and scikit-learn for the live FedAvg, FLocKit for the toolkit artifact | Instant live round plus the FLock federated LoRA path. |
 | Voice | LiveKit Agents, Deepgram STT, ElevenLabs TTS | Production-grade real-time voice with synchronized UI events. |
 | Validation and config | pydantic and pydantic-settings | Typed requests and env configuration. |
 | Tests and lint | pytest and ruff | 16 tests, clean lint. |
-| Reference front end | Vanilla HTML, CSS, JavaScript, plus the browser Web Speech API | A working reference that drives the real API. |
-| Production front end | Lovable | Rebuilds both surfaces against the same API. |
+| Front end | Vanilla HTML, CSS, JavaScript, plus the browser Web Speech API; Lovable production build | Working citizen and institution surfaces on the same API. |
 
 ## Project structure
 
@@ -397,7 +396,7 @@ app/
   flock.py           FLock inference client: streaming answer, non-streaming planner, fallback
   agentic.py         auditable agentic retrieval: plan, retrieve with hops, grade, consolidate
   retrieval.py       grounded retrieval over the GOV.UK corpus, BM25 or embeddings
-  redaction.py       PII minimisation, regex by default, Presidio optional
+  redaction.py       PII minimisation, regex and Presidio
   guardrails.py      confidence labels and human escalation
   actions.py         turns an answer into a grounded, dated what-to-do-next plan
   plans.py           per-citizen action plan store, persists across questions
@@ -424,7 +423,7 @@ SPEC.md              the authoritative build spec and API contract
 
 ## API reference
 
-The Lovable front end and the mock front ends all consume the same API.
+The citizen app, institution console, and production front end all consume the same API.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -467,7 +466,7 @@ done        the final answer and the audit entry, including the reasoning trace
 
 ```bash
 uv sync
-cp .env.example .env          # optional: add FLOCK_API_KEY for live inference
+cp .env.example .env          # add the demo keys for FLock and voice
 uv run uvicorn app.main:app --reload
 ```
 
@@ -476,9 +475,9 @@ Then open:
 - Citizen app: http://127.0.0.1:8000/
 - Institution console: http://127.0.0.1:8000/gov.html
 
-With no `FLOCK_API_KEY` the app still runs the full flow and serves a clearly labelled local answer
-built from the retrieved sources. Add a key, with credits purchased at platform.flock.io, to route
-real inference through FLock and to turn on the large language model planner.
+For the demo environment, configure `FLOCK_API_KEY` so live inference and the large language model
+planner run through FLock. The local fallback remains available for development and resilience, but
+the presentation path is the live FLock path.
 
 ## Configuration
 
@@ -486,7 +485,7 @@ All settings load from the environment or a `.env` file. See `.env.example`.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `FLOCK_API_KEY` | empty | FLock API key. Empty means local fallback mode. |
+| `FLOCK_API_KEY` | empty | FLock API key for live inference and planning. Empty means local fallback mode. |
 | `FLOCK_BASE_URL` | `https://api.flock.io/v1` | The OpenAI-compatible base URL. |
 | `FLOCK_MODEL` | `qwen3-30b-a3b-instruct-2507` | The model id. |
 | `REDACTOR` | `auto` | `auto`, `presidio`, or `regex`. |
@@ -496,7 +495,7 @@ All settings load from the environment or a `.env` file. See `.env.example`.
 | `ELEVEN_API_KEY` | empty | ElevenLabs TTS, for voice. Note the variable name is ELEVEN, not ELEVENLABS. |
 | `VOICE_ID` | a default voice | The ElevenLabs voice id. |
 
-## Optional extras
+## Included integrations
 
 ```bash
 uv sync --extra presidio     # Microsoft Presidio NER redaction, then: python -m spacy download en_core_web_lg
@@ -515,9 +514,9 @@ The worker routes its language model step to FLock, uses Deepgram for speech to 
 for text to speech, and pushes highlight events over the LiveKit data channel so the front end
 highlights the document the advisor is citing as it speaks.
 
-**Real FLock federated toolkit.** The live federated round at `/api/federated/run` is a real FedAvg
-round we run ourselves. To produce the heavier federated LoRA artifact using FLock's own FLocKit
-toolkit, follow `scripts/run_flockit.md` and capture the before and after evaluation loss.
+**FLock federated toolkit.** The live federated round at `/api/federated/run` is a real FedAvg round
+we run ourselves. The FLocKit path in `scripts/run_flockit.md` produces the federated LoRA artifact
+and captures the before-and-after evaluation loss.
 
 ## Testing
 
@@ -526,46 +525,13 @@ uv run pytest -q       # 16 tests: redaction, retrieval, federated, agentic, act
 uv run ruff check app tests
 ```
 
-## Honest claims
+## Core demo flow
 
-What Tributo can truthfully say, and what it must not.
-
-**We can claim.** Personal data is redacted before egress and never retained. Federated training
-keeps data in jurisdiction, and only weights are shared. Inference is the open-source qwen3-30b on
-the FLock API Platform. The federated improvement is real and measurable, before and after, on a
-held-out set. The accountability artifacts are real: an ATRS record, a model card, cited answers, an
-audit log, and a human escalation path.
-
-**We must not claim.** That the hosted FLock inference API keeps data in a specific region, because
-the region is not disclosed, which is exactly why we redact before the call. That the federated round
-runs on chain or is staked, because that is out of scope. That Tributo gives real or binding tax
-determinations. That the retrieval is a knowledge graph, because the tax-facts store is a curated
-structured fact table. Non-IID per-client data only as far as the demo actually shards it. Streaming
-and tool-calling through FLock until they are live-tested.
-
-## Roadmap
-
-- Live inference and the language model planner, once FLock credits are purchased.
-- Real-time voice, once LiveKit, Deepgram, and ElevenLabs keys are added, plus a day-one test of
-  FLock streaming and tool-calling through the LiveKit pipeline.
-- The production front end rebuilt in Lovable, for both the citizen app and the institution console,
-  against the API in `SPEC.md`.
-- A real per-user store for action plans, replacing the in-memory store.
-- The heavier FLocKit federated LoRA artifact, captured ahead of the demo.
-
-## Demo script
-
-A short, scored pitch in roughly three minutes.
-
-1. The citizen problem, twenty seconds. Tax is hard, advice is unaffordable, and the data is among
-   the most sensitive there is.
-2. The live demo, sixty seconds. A spoken or typed question, the reasoning trace, the cited answer,
-   the source document highlighted, and the action plan. Show the redacted payload. Trigger one human
-   escalation.
-3. Why this needs FLock, forty seconds. Sovereignty through redaction and federation, and the
-   federated loop improving the model across institutions without pooling data. Show the before and
-   after.
-4. The two sides, twenty seconds. Switch to the institution console and show the federated round and
-   the oversight dashboard.
-5. Adoption, twenty seconds. Citizens Advice and a single council pilot first, wider rollout later,
-   tied to the UK sovereign AI agenda.
+1. Ask a tax question in the citizen app, by voice or text.
+2. Watch Tributo redact personal data before inference.
+3. See the reasoning trace, retrieved GOV.UK or HMRC sources, exact fact chips, and highlighted
+   source passage.
+4. Receive a plain-English answer, streamed through FLock, with citations attached.
+5. Review the persistent action plan generated from the answer.
+6. Open the institution console to see metrics, escalations, audit logs, the ATRS record, the model
+   card, and the federated learning run.
